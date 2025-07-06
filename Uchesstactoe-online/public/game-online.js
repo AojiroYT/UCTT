@@ -533,6 +533,15 @@ function showPromotionDialog(color, cell, pieceElem) {
 // Show game over dialog centered on the board
 function showGameOverDialog(message) {
   showGameButtons(false);
+  setSlider.disabled = false;
+  checkmateSlider.disabled = false;
+  playBtn.disabled = false;
+  playBtn.style.opacity = 1;
+  // Remove any existing dialog
+  const oldDialog = document.getElementById('gameOverDialog');
+  if (oldDialog) oldDialog.remove();
+
+  // --- Fix: Always get board position, even if hidden ---
   // Temporarily show board if hidden to get position
   let restoreBoardDisplay = null;
   if (boardDiv.style.display === 'none') {
@@ -952,6 +961,48 @@ function isKingInCheck(color) {
 let checkmateEnabled = true;
 let gameStarted = false;
 
+const setSlider = document.getElementById('setSlider');
+const setLabel = document.getElementById('setLabel');
+const checkmateSlider = document.getElementById('checkmateSlider');
+const checkmateLabel = document.getElementById('checkmateLabel');
+const playBtn = document.getElementById('playBtn');
+const boardDiv = document.getElementById('board');
+
+// Hide board until Play is pressed
+boardDiv.style.display = 'none';
+
+// Clicking anywhere on the slider or its parent toggles its value (only if Play not pressed)
+setSlider.parentElement.addEventListener('click', e => {
+  if (!playBtn.disabled) {
+    setSlider.value = setSlider.value === '0' ? '1' : '0';
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});
+setSlider.addEventListener('click', e => {
+  if (!playBtn.disabled) {
+    setSlider.value = setSlider.value === '0' ? '1' : '0';
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});
+checkmateSlider.parentElement.addEventListener('click', e => {
+  if (!playBtn.disabled) {
+    checkmateSlider.value = checkmateSlider.value === '0' ? '1' : '0';
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});
+checkmateSlider.addEventListener('click', e => {
+  if (!playBtn.disabled) {
+    checkmateSlider.value = checkmateSlider.value === '0' ? '1' : '0';
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});
+
+// Add resign and offer draw buttons
+const settingsBar = document.getElementById('settingsBar');
 const resignBtn = document.createElement('button');
 resignBtn.textContent = 'Resign';
 resignBtn.style.display = 'none';
@@ -1100,6 +1151,7 @@ function setupBoardEventsMultiplayer() {
 }
 
 // --- Initialization ---
+promptRoomAndJoin();
 createBoard();
 placePieces();
 initializeTransparency();
@@ -1112,110 +1164,3 @@ socket.on('waitingForOpponent', () => {
 socket.on('opponentLeft', () => {
   alert('Your opponent has left the game.');
 });
-
-// --- UI: Mode selection and lobby ---
-const modeModal = document.getElementById('modeModal');
-const lobby = document.getElementById('lobby');
-const singleBtn = document.getElementById('singleBtn');
-const multiBtn = document.getElementById('multiBtn');
-const createRoomBtn = document.getElementById('createRoomBtn');
-const listRoomsBtn = document.getElementById('listRoomsBtn');
-const roomCreate = document.getElementById('roomCreate');
-const roomJoin = document.getElementById('roomJoin');
-const publicRooms = document.getElementById('publicRooms');
-const showJoinBtn = document.getElementById('showJoinBtn');
-const confirmCreateBtn = document.getElementById('confirmCreateBtn');
-const confirmJoinBtn = document.getElementById('confirmJoinBtn');
-const roomNameInput = document.getElementById('roomNameInput');
-const roomPassInput = document.getElementById('roomPassInput');
-const joinRoomNameInput = document.getElementById('joinRoomNameInput');
-const joinRoomPassInput = document.getElementById('joinRoomPassInput');
-const boardToggle = document.getElementById('boardToggle');
-const checkmateToggle = document.getElementById('checkmateToggle');
-const playBtn = document.getElementById('playBtn');
-const boardDiv = document.getElementById('board');
-
-let gameMode = null; // 'single' or 'multi'
-let boardSet = 0;
-
-// Hide everything except mode modal at start
-lobby.style.display = 'none';
-settingsBar.style.display = 'none';
-boardDiv.style.display = 'none';
-
-singleBtn.onclick = () => {
-  gameMode = 'single';
-  modeModal.style.display = 'none';
-  settingsBar.style.display = '';
-  boardDiv.style.display = '';
-};
-multiBtn.onclick = () => {
-  gameMode = 'multi';
-  modeModal.style.display = 'none';
-  lobby.style.display = 'flex';
-};
-
-// Toggle buttons for board and checkmate
-boardToggle.onclick = () => {
-  boardSet = 1 - boardSet;
-  boardToggle.textContent = boardSet === 0 ? 'Set 1' : 'Set 2';
-};
-checkmateToggle.onclick = () => {
-  checkmateEnabled = !checkmateEnabled;
-  checkmateToggle.textContent = checkmateEnabled ? 'Enabled' : 'Disabled';
-};
-
-// Hide settings bar when game starts
-playBtn.onclick = () => {
-  settingsBar.style.display = 'none';
-  // ... start game logic ...
-};
-
-// --- Multiplayer lobby logic ---
-createRoomBtn.onclick = () => {
-  roomCreate.style.display = 'flex';
-  roomJoin.style.display = 'none';
-  publicRooms.style.display = 'none';
-};
-listRoomsBtn.onclick = () => {
-  socket.emit('listRooms');
-};
-showJoinBtn.onclick = () => {
-  roomJoin.style.display = 'flex';
-  roomCreate.style.display = 'none';
-  publicRooms.style.display = 'none';
-};
-confirmCreateBtn.onclick = () => {
-  const name = roomNameInput.value.trim();
-  const pass = roomPassInput.value;
-  if (!name) return alert('Enter a room name!');
-  socket.emit('createRoom', { name, pass });
-};
-confirmJoinBtn.onclick = () => {
-  const name = joinRoomNameInput.value.trim();
-  const pass = joinRoomPassInput.value;
-  if (!name) return alert('Enter a room name!');
-  socket.emit('joinRoom', { name, pass });
-};
-socket.on('roomCreated', (room) => {
-  alert(`Room '${room}' created. Waiting for opponent...`);
-  lobby.style.display = 'none';
-  settingsBar.style.display = '';
-  boardDiv.style.display = '';
-});
-socket.on('roomJoined', (room) => {
-  alert(`Joined room '${room}'. Waiting for opponent...`);
-  lobby.style.display = 'none';
-  settingsBar.style.display = '';
-  boardDiv.style.display = '';
-});
-socket.on('roomError', (msg) => {
-  alert(msg);
-});
-socket.on('publicRooms', (rooms) => {
-  publicRooms.style.display = '';
-  publicRooms.innerHTML = '<h3>Public Rooms</h3>' + rooms.map(r => `<div>${r.name} <button onclick="joinPublicRoom('${r.name}')">Join</button></div>`).join('');
-});
-window.joinPublicRoom = (name) => {
-  socket.emit('joinRoom', { name, pass: '' });
-};
