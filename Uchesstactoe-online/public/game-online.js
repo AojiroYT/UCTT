@@ -1136,8 +1136,7 @@ function setupBoardEventsMultiplayer() {
       sendMoveToServer({
         from: {row: fromRow, col: fromCol},
         to: {row: toRow, col: toCol},
-        promotion,
-        nextTurn: (myColor === 'white' ? 'black' : 'white')
+        promotion
       });
       clearHighlights();
       selectedPiece = null;
