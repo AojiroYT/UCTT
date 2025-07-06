@@ -533,10 +533,6 @@ function showPromotionDialog(color, cell, pieceElem) {
 // Show game over dialog centered on the board
 function showGameOverDialog(message) {
   showGameButtons(false);
-  setSlider.disabled = false;
-  checkmateSlider.disabled = false;
-  playBtn.disabled = false;
-  playBtn.style.opacity = 1;
   // Remove any existing dialog
   const oldDialog = document.getElementById('gameOverDialog');
   if (oldDialog) oldDialog.remove();
@@ -967,53 +963,59 @@ function isKingInCheck(color) {
 let checkmateEnabled = true;
 let gameStarted = false;
 
-const setSlider = document.getElementById('setSlider');
-const setLabel = document.getElementById('setLabel');
-const checkmateSlider = document.getElementById('checkmateSlider');
-const checkmateLabel = document.getElementById('checkmateLabel');
+// Toggle button elements
+const boardToggle = document.getElementById('boardToggle');
+const checkmateToggle = document.getElementById('checkmateToggle');
 const playBtn = document.getElementById('playBtn');
 const boardDiv = document.getElementById('board');
 
 // Hide board until Play is pressed
 boardDiv.style.display = 'none';
 
-// Clicking anywhere on the slider or its parent toggles its value (only if Play not pressed)
-if (setSlider && setSlider.parentElement) {
-  setSlider.parentElement.addEventListener('click', e => {
-    if (!playBtn.disabled) {
-      setSlider.value = setSlider.value === '0' ? '1' : '0';
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  });
-}
-if (setSlider) {
-  setSlider.addEventListener('click', e => {
-    if (!playBtn.disabled) {
-      setSlider.value = setSlider.value === '0' ? '1' : '0';
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  });
-}
-if (checkmateSlider && checkmateSlider.parentElement) {
-  checkmateSlider.parentElement.addEventListener('click', e => {
-    if (!playBtn.disabled) {
-      checkmateSlider.value = checkmateSlider.value === '0' ? '1' : '0';
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  });
-}
-if (checkmateSlider) {
-  checkmateSlider.addEventListener('click', e => {
-    if (!playBtn.disabled) {
-      checkmateSlider.value = checkmateSlider.value === '0' ? '1' : '0';
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  });
-}
+// Toggle logic for Board set
+boardToggle.setAttribute('data-value', '0');
+boardToggle.addEventListener('click', () => {
+  if (playBtn.disabled) return;
+  const current = boardToggle.getAttribute('data-value');
+  if (current === '0') {
+    boardToggle.setAttribute('data-value', '1');
+    boardToggle.textContent = 'Set 2';
+    boardToggle.setAttribute('aria-pressed', 'true');
+    boardToggle.style.background = '#eee';
+    boardToggle.style.color = '#28a745';
+  } else {
+    boardToggle.setAttribute('data-value', '0');
+    boardToggle.textContent = 'Set 1';
+    boardToggle.setAttribute('aria-pressed', 'true');
+    boardToggle.style.background = '#28a745';
+    boardToggle.style.color = '#222';
+  }
+});
+
+// Toggle logic for Checkmate
+checkmateToggle.setAttribute('data-value', '1');
+checkmateToggle.addEventListener('click', () => {
+  if (playBtn.disabled) return;
+  const current = checkmateToggle.getAttribute('data-value');
+  if (current === '1') {
+    checkmateToggle.setAttribute('data-value', '0');
+    checkmateToggle.textContent = 'Disabled';
+    checkmateToggle.setAttribute('aria-pressed', 'false');
+    checkmateToggle.style.background = '#eee';
+    checkmateToggle.style.color = '#222';
+  } else {
+    checkmateToggle.setAttribute('data-value', '1');
+    checkmateToggle.textContent = 'Enabled';
+    checkmateToggle.setAttribute('aria-pressed', 'true');
+    checkmateToggle.style.background = '#28a745';
+    checkmateToggle.style.color = '#222';
+  }
+});
+
+// On page load, ensure the button matches the initial state
+checkmateToggle.textContent = 'Enabled';
+checkmateToggle.style.background = '#28a745';
+checkmateToggle.style.color = '#222';
 
 // Add resign and offer draw buttons
 const settingsBar = document.getElementById('settingsBar');
@@ -1041,14 +1043,14 @@ drawBtn.addEventListener('click', () => {
 // Modify Play button logic to show/hide game buttons
 playBtn.addEventListener('click', () => {
   // Apply settings and start game
-  const idx = setSlider ? Number(setSlider.value) : 0;
+  const idx = Number(boardToggle.getAttribute('data-value'));
   setInitialPositionsFromLayout(idx);
-  checkmateEnabled = checkmateSlider ? checkmateSlider.value === '1' : true;
+  checkmateEnabled = checkmateToggle.getAttribute('data-value') === '1';
   boardDiv.style.display = '';
   resetBoard();
   // Lock settings
-  if (setSlider) setSlider.disabled = true;
-  if (checkmateSlider) checkmateSlider.disabled = true;
+  boardToggle.disabled = true;
+  checkmateToggle.disabled = true;
   playBtn.disabled = true;
   playBtn.style.opacity = 0.5;
   showGameButtons(true);
