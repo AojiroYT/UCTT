@@ -987,13 +987,15 @@ if (setSlider && setSlider.parentElement) {
     }
   });
 }
-setSlider.addEventListener('click', e => {
-  if (!playBtn.disabled) {
-    setSlider.value = setSlider.value === '0' ? '1' : '0';
-    e.preventDefault();
-    e.stopPropagation();
-  }
-});
+if (setSlider) {
+  setSlider.addEventListener('click', e => {
+    if (!playBtn.disabled) {
+      setSlider.value = setSlider.value === '0' ? '1' : '0';
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+}
 if (checkmateSlider && checkmateSlider.parentElement) {
   checkmateSlider.parentElement.addEventListener('click', e => {
     if (!playBtn.disabled) {
@@ -1003,13 +1005,15 @@ if (checkmateSlider && checkmateSlider.parentElement) {
     }
   });
 }
-checkmateSlider.addEventListener('click', e => {
-  if (!playBtn.disabled) {
-    checkmateSlider.value = checkmateSlider.value === '0' ? '1' : '0';
-    e.preventDefault();
-    e.stopPropagation();
-  }
-});
+if (checkmateSlider) {
+  checkmateSlider.addEventListener('click', e => {
+    if (!playBtn.disabled) {
+      checkmateSlider.value = checkmateSlider.value === '0' ? '1' : '0';
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+}
 
 // Add resign and offer draw buttons
 const settingsBar = document.getElementById('settingsBar');
