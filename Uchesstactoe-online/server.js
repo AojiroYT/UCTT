@@ -16,6 +16,31 @@
   io.on('connection', (socket) => {
     let currentRoom = null;
 
+    socket.on('listRooms', () => {
+      const publicRooms = Object.keys(rooms).map(name => ({
+        name,
+        hasPassword: false
+      }));
+      socket.emit('roomList', publicRooms);
+    });
+
+    socket.on('createRoom', ({ name, pass }) => {
+      if (rooms[name]) {
+        socket.emit('roomError', 'Room already exists.');
+        return;
+      }
+      rooms[name] = [];
+      socket.emit('roomCreated', { name, hasPassword: !!pass });
+    });
+
+    socket.on('joinRoom', ({ name, pass }) => {
+      if (!rooms[name]) {
+        socket.emit('roomError', 'Room does not exist.');
+        return;
+      }
+      socket.emit('roomJoined', { name, hasPassword: false });
+    });
+
     socket.on('join', (roomId) => {
       socket.join(roomId);
       currentRoom = roomId;
