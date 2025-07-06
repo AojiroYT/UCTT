@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ultimate ChessTacToe</title>
+  <style>
+    .board {
+      display: grid;
+      grid-template-columns: repeat(9, 70px);
+      grid-template-rows: repeat(9, 70px);
+      margin: 20px;
+    }
+  
+    .cell {
+      width: 70px;
+      height: 70px;
+      border: 1px solid #999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      cursor: pointer;
+      user-select: none;
+      background-color: #fff; /* default white */
+      position: relative;
+    }
+
+    /* Chessboard pattern: even sum = white, odd sum = black */
+    .cell[data-row][data-col] {
+      background-color: #fff;
+    }
+    .cell[data-row][data-col].black-square {
+      background-color: #222;
+    }
+
+    .player1 {
+      color: blue;
+    }
+  
+    .player2 {
+      color: red;
+    }
+  
+    /* フィールドごとに太線で囲む */
+    .top-border {
+      border-top: 5px solid red !important;
+    }
+  
+    .left-border {
+      border-left: 5px solid red !important;
+    }
+
+    .right-border {
+        border-right: 5px solid red !important;
+    }
+
+    .bottom-border {
+        border-bottom: 5px solid red !important;
+    }
+
+    .piece {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: stretch;
+        justify-content: stretch;
+        box-sizing: border-box;
+        position: relative;
+        z-index: 2;
+    }
+
+    .piece img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+        margin: 0;
+        pointer-events: none;
+        /* border: 1px solid red; */
+        z-index: 2;
+        position: relative;
+    }
+
+    /* 色分け */
+    .white {
+        color: #eee;
+        border-radius: 50%;
+    }
+
+    .black {
+        color: #222;
+        border-radius: 50%;
+    }
+
+    /* Ensure highlight is visible on owned fields */
+
+    .field-white::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255,255,255,0.5);
+        pointer-events: none;
+        z-index: 0;
+    }
+    .field-black::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.3);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .piece.transparent img {
+        opacity: 0.75 !important;
+    }
+
+    .highlight {
+        position: relative;
+        /* Do not override background or z-index, so field filters remain visible */
+    }
+
+    .highlight::after {
+        content: '';
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 12px; height: 12px;
+        background: red;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    /* Highlight last move */
+    .last-move {
+        box-shadow: 0 0 0 3px orange inset;
+        z-index: 3;
+    }
+
+    .selected {
+        outline: 2px solid orange;
+    }
+
+    .annotation-highlight {
+        background: rgba(255, 255, 0, 0.5) !important;
+        box-shadow: none !important;
+    }
+
+    .annotation-arrow {
+        stroke: orange;
+        stroke-width: 6;
+        marker-end: url(#arrowhead);
+        opacity: 0.8;
+    }
+
+  </style>
+  
+</head>
+<body>
+    <div id="settingsBar" style="display: flex; justify-content: center; align-items: flex-end; gap: 32px; margin: 16px 0;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <span style="font-weight: bold;">Board</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>Set 1</span>
+                <input type="range" id="setSlider" min="0" max="1" step="1" value="0" style="width: 80px; height: 16px; accent-color: #28a745; cursor: pointer;">
+                <span>Set 2</span>
+            </div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+            <span style="font-weight: bold;">Checkmate</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>Enabled</span>
+                <input type="range" id="checkmateSlider" min="0" max="1" step="1" value="1" style="width: 80px; height: 16px; accent-color: #28a745; cursor: pointer;">
+                <span>Disabled</span>
+            </div>
+        </div>
+        <button id="playBtn" style="padding: 8px 24px; font-size: 1.1em; font-weight: bold; background: #28a745; color: #fff; border: none; border-radius: 6px; cursor: pointer;">Play</button>
+    </div>
+    <div class="board" id="board" style="position:relative;">
+        <svg id="annotationOverlay" style="width:100%; height:100%; position:absolute; top:0; left:0; z-index:5; pointer-events:none;"></svg>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="game-online.js"></script>
+
+</body>
+</html>
