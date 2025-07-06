@@ -156,31 +156,94 @@
         opacity: 0.8;
     }
 
+    .toggle-btn {
+      display: inline-block;
+      min-width: 240px;
+      min-height: 96px;
+      width: auto;
+      height: auto;
+      border-radius: 12px;
+      border: 2px solid #28a745;
+      background: linear-gradient(90deg, #28a745 50%, #eee 50%);
+      color: #222;
+      font-weight: bold;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+      outline: none;
+      box-shadow: 0 2px 6px rgba(40,167,69,0.08);
+      margin: 0 4px;
+      font-size: 2em;
+      padding: 0 48px;
+    }
+    .toggle-btn[data-value="1"] {
+      background: linear-gradient(90deg, #28a745 50%, #eee 50%);
+      color: #222 !important;
+    }
+    .toggle-btn[data-value="0"] {
+      background: linear-gradient(90deg, #eee 50%, #28a745 50%);
+      color: #222 !important;
+    }
+    .toggle-btn:active {
+      box-shadow: 0 0 0 2px #28a74533;
+      color: #222 !important;
+    }
+    #playBtn {
+      min-width: 320px;
+      min-height: 96px;
+      width: auto;
+      height: auto;
+      padding: 24px 72px;
+      font-size: 3.5em;
+      border-radius: 48px;
+    }
+
   </style>
   
 </head>
 <body>
+    <div id="modeModal" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:3000;">
+      <div style="background:#fff;padding:32px 48px;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:24px;">
+        <h2>Choose Game Mode</h2>
+        <button id="singleBtn" style="font-size:1.3em;padding:16px 40px;">Single Player</button>
+        <button id="multiBtn" style="font-size:1.3em;padding:16px 40px;">Multiplayer</button>
+      </div>
+    </div>
+    <div id="lobby" style="display:none;flex-direction:column;align-items:center;gap:16px;margin:24px 0;">
+      <h2>Multiplayer Lobby</h2>
+      <div style="display:flex;gap:16px;">
+        <button id="createRoomBtn" style="font-size:1.1em;padding:12px 32px;">Create Room</button>
+        <button id="listRoomsBtn" style="font-size:1.1em;padding:12px 32px;">List Public Rooms</button>
+      </div>
+      <div id="roomCreate" style="display:none;flex-direction:column;align-items:center;gap:8px;margin-top:12px;">
+        <input id="roomNameInput" placeholder="Room Name" style="font-size:1em;padding:8px;">
+        <input id="roomPassInput" placeholder="Password (optional)" type="password" style="font-size:1em;padding:8px;">
+        <button id="confirmCreateBtn" style="font-size:1em;padding:8px 24px;">Create</button>
+      </div>
+      <div id="roomJoin" style="display:none;flex-direction:column;align-items:center;gap:8px;margin-top:12px;">
+        <input id="joinRoomNameInput" placeholder="Room Name" style="font-size:1em;padding:8px;">
+        <input id="joinRoomPassInput" placeholder="Password (if any)" type="password" style="font-size:1em;padding:8px;">
+        <button id="confirmJoinBtn" style="font-size:1em;padding:8px 24px;">Join</button>
+      </div>
+      <div id="publicRooms" style="display:none;margin-top:16px;"></div>
+      <button id="showJoinBtn" style="font-size:1em;padding:8px 24px;margin-top:8px;">Join Room by Name</button>
+    </div>
     <div id="settingsBar" style="display: flex; justify-content: center; align-items: flex-end; gap: 32px; margin: 16px 0;">
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-            <span style="font-weight: bold;">Board</span>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span>Set 1</span>
-                <input type="range" id="setSlider" min="0" max="1" step="1" value="0" style="width: 80px; height: 16px; accent-color: #28a745; cursor: pointer;">
-                <span>Set 2</span>
-            </div>
-        </div>
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-            <span style="font-weight: bold;">Checkmate</span>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span>Enabled</span>
-                <input type="range" id="checkmateSlider" min="0" max="1" step="1" value="1" style="width: 80px; height: 16px; accent-color: #28a745; cursor: pointer;">
-                <span>Disabled</span>
-            </div>
-        </div>
-        <button id="playBtn" style="padding: 8px 24px; font-size: 1.1em; font-weight: bold; background: #28a745; color: #fff; border: none; border-radius: 6px; cursor: pointer;">Play</button>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+        <span style="font-weight: bold;">Board</span>
+        <button id="boardToggle" style="font-size:1.2em;padding:16px 32px;">Set 1</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+        <span style="font-weight: bold;">Checkmate</span>
+        <button id="checkmateToggle" style="font-size:1.2em;padding:16px 32px;">Enabled</button>
+      </div>
+      <button id="playBtn" style="padding: 16px 48px; font-size: 1.3em; font-weight: bold; background: #28a745; color: #fff; border: none; border-radius: 6px; cursor: pointer;">Play</button>
     </div>
     <div class="board" id="board" style="position:relative;">
         <svg id="annotationOverlay" style="width:100%; height:100%; position:absolute; top:0; left:0; z-index:5; pointer-events:none;"></svg>
+    </div>
+    <div id="resignContainer" style="position:fixed; bottom:32px; right:32px; z-index:3000; display:none;">
+        <button id="resignBtn" style="padding: 20px 48px; font-size: 2em; background: #dc3545; color: #fff; border: none; border-radius: 16px; cursor: pointer; font-weight: bold;">Resign</button>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="game-online.js"></script>
