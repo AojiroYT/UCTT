@@ -1189,7 +1189,6 @@ socket.on('opponentLeft', () => {
 
 // --- Lobby and Room Join/Create Logic ---
 const lobbyDiv = document.getElementById('lobby');
-const boardDiv = document.getElementById('board');
 const createRoomBtn = document.getElementById('createRoomBtn');
 const listRoomsBtn = document.getElementById('listRoomsBtn');
 const roomCreateDiv = document.getElementById('roomCreate');
