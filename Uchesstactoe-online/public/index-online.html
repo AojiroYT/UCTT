@@ -156,48 +156,6 @@
         opacity: 0.8;
     }
 
-    .toggle-btn {
-      display: inline-block;
-      min-width: 240px;
-      min-height: 96px;
-      width: auto;
-      height: auto;
-      border-radius: 12px;
-      border: 2px solid #28a745;
-      background: linear-gradient(90deg, #28a745 50%, #eee 50%);
-      color: #222;
-      font-weight: bold;
-      cursor: pointer;
-      position: relative;
-      transition: background 0.2s;
-      outline: none;
-      box-shadow: 0 2px 6px rgba(40,167,69,0.08);
-      margin: 0 4px;
-      font-size: 2em;
-      padding: 0 48px;
-    }
-    .toggle-btn[data-value="1"] {
-      background: linear-gradient(90deg, #28a745 50%, #eee 50%);
-      color: #222 !important;
-    }
-    .toggle-btn[data-value="0"] {
-      background: linear-gradient(90deg, #eee 50%, #28a745 50%);
-      color: #222 !important;
-    }
-    .toggle-btn:active {
-      box-shadow: 0 0 0 2px #28a74533;
-      color: #222 !important;
-    }
-    #playBtn {
-      min-width: 320px;
-      min-height: 96px;
-      width: auto;
-      height: auto;
-      padding: 24px 72px;
-      font-size: 3.5em;
-      border-radius: 48px;
-    }
-
   </style>
   
 </head>
@@ -241,9 +199,6 @@
     </div>
     <div class="board" id="board" style="position:relative;">
         <svg id="annotationOverlay" style="width:100%; height:100%; position:absolute; top:0; left:0; z-index:5; pointer-events:none;"></svg>
-    </div>
-    <div id="resignContainer" style="position:fixed; bottom:32px; right:32px; z-index:3000; display:none;">
-        <button id="resignBtn" style="padding: 20px 48px; font-size: 2em; background: #dc3545; color: #fff; border: none; border-radius: 16px; cursor: pointer; font-weight: bold;">Resign</button>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="game-online.js"></script>
