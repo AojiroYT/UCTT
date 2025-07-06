@@ -965,6 +965,8 @@ const boardToggle = document.getElementById('boardToggle');
 const checkmateToggle = document.getElementById('checkmateToggle');
 const playBtn = document.getElementById('playBtn');
 const boardDiv = document.getElementById('board');
+const settingsBar = document.getElementById('settingsBar');
+const lobbyDiv = document.getElementById('lobby');
 
 // Hide board until Play is pressed
 boardDiv.style.display = 'none';
@@ -1015,7 +1017,6 @@ checkmateToggle.style.background = '#28a745';
 checkmateToggle.style.color = '#222';
 
 // Add resign and offer draw buttons
-const settingsBar = document.getElementById('settingsBar');
 const resignBtn = document.createElement('button');
 resignBtn.textContent = 'Resign';
 resignBtn.style.display = 'none';
@@ -1184,10 +1185,20 @@ const multiModeBtn = document.getElementById('multiModeBtn');
 function showModeSelect() {
   if (modeSelect) modeSelect.style.display = 'flex';
   if (boardDiv) boardDiv.style.display = 'none';
+  if (settingsBar) settingsBar.style.display = 'none';
+  if (lobbyDiv) lobbyDiv.style.display = 'none';
 }
 function showGameUI() {
   if (modeSelect) modeSelect.style.display = 'none';
   if (boardDiv) boardDiv.style.display = '';
+  if (settingsBar) settingsBar.style.display = 'flex';
+  if (lobbyDiv) lobbyDiv.style.display = 'none';
+}
+function showLobby() {
+  if (modeSelect) modeSelect.style.display = 'none';
+  if (lobbyDiv) lobbyDiv.style.display = 'flex';
+  if (boardDiv) boardDiv.style.display = 'none';
+  if (settingsBar) settingsBar.style.display = 'none';
 }
 
 showModeSelect();
@@ -1200,7 +1211,77 @@ singleModeBtn.onclick = () => {
 };
 
 multiModeBtn.onclick = () => {
-  showGameUI();
-  // Multiplayer: join default room as before
-  socket.emit('join', 'room1');
+  showLobby();
 };
+
+// --- Multiplayer Lobby Logic (restored) ---
+const createRoomBtn = document.getElementById('createRoomBtn');
+const listRoomsBtn = document.getElementById('listRoomsBtn');
+const roomCreateDiv = document.getElementById('roomCreate');
+const roomJoinDiv = document.getElementById('roomJoin');
+const confirmCreateBtn = document.getElementById('confirmCreateBtn');
+const confirmJoinBtn = document.getElementById('confirmJoinBtn');
+const showJoinBtn = document.getElementById('showJoinBtn');
+const publicRoomsDiv = document.getElementById('publicRooms');
+const roomNameInput = document.getElementById('roomNameInput');
+const roomPassInput = document.getElementById('roomPassInput');
+const joinRoomNameInput = document.getElementById('joinRoomNameInput');
+const joinRoomPassInput = document.getElementById('joinRoomPassInput');
+
+createRoomBtn.onclick = () => {
+  roomCreateDiv.style.display = 'flex';
+  roomJoinDiv.style.display = 'none';
+  publicRoomsDiv.style.display = 'none';
+};
+listRoomsBtn.onclick = () => {
+  socket.emit('listRooms');
+  publicRoomsDiv.style.display = 'block';
+  roomCreateDiv.style.display = 'none';
+  roomJoinDiv.style.display = 'none';
+};
+showJoinBtn.onclick = () => {
+  roomJoinDiv.style.display = 'flex';
+  roomCreateDiv.style.display = 'none';
+  publicRoomsDiv.style.display = 'none';
+};
+confirmCreateBtn.onclick = () => {
+  const name = roomNameInput.value.trim();
+  const pass = roomPassInput.value;
+  if (!name) return alert('Please enter a room name.');
+  socket.emit('createRoom', { name, pass });
+};
+confirmJoinBtn.onclick = () => {
+  const name = joinRoomNameInput.value.trim();
+  const pass = joinRoomPassInput.value;
+  if (!name) return alert('Please enter a room name.');
+  socket.emit('joinRoom', { name, pass });
+};
+socket.on('roomCreated', (room) => {
+  showGameUI();
+  socket.emit('join', room.name);
+});
+socket.on('roomJoined', (room) => {
+  showGameUI();
+  socket.emit('join', room.name);
+});
+socket.on('roomError', (msg) => {
+  alert(msg);
+});
+socket.on('roomList', (rooms) => {
+  publicRoomsDiv.innerHTML = '<h3>Public Rooms</h3>';
+  if (!rooms.length) {
+    publicRoomsDiv.innerHTML += '<div>No public rooms available.</div>';
+    return;
+  }
+  rooms.forEach(room => {
+    const btn = document.createElement('button');
+    btn.textContent = room.name + (room.hasPassword ? ' (Password)' : '');
+    btn.onclick = () => {
+      joinRoomNameInput.value = room.name;
+      roomJoinDiv.style.display = 'flex';
+      roomCreateDiv.style.display = 'none';
+      publicRoomsDiv.style.display = 'none';
+    };
+    publicRoomsDiv.appendChild(btn);
+  });
+});
