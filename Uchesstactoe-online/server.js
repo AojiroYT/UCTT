@@ -10,11 +10,12 @@
 
   app.use(express.static('public'));
 
-  const games = {};
+  const games = {}; // { roomId: { moves: [], turn: 'white'|'black', sockets: {white: socketId, black: socketId} } }
   const rooms = {}; // { roomId: [socketId1, socketId2] }
 
   io.on('connection', (socket) => {
     let currentRoom = null;
+    let myColor = null;
 
     socket.on('join', (roomId) => {
       socket.join(roomId);
@@ -25,33 +26,43 @@
       // Wait for 2 players
       if (rooms[roomId].length === 2) {
         // Assign colors
+        if (!games[roomId]) games[roomId] = { moves: [], turn: 'white', sockets: {} };
+        games[roomId].sockets.white = rooms[roomId][0];
+        games[roomId].sockets.black = rooms[roomId][1];
         io.to(rooms[roomId][0]).emit('assignColor', 'white');
         io.to(rooms[roomId][1]).emit('assignColor', 'black');
         // Send current game state to both
-        if (!games[roomId]) games[roomId] = { moves: [] };
         io.to(roomId).emit('init', games[roomId].moves);
       } else {
-        // Tell the first player to wait
         socket.emit('waitingForOpponent');
       }
     });
 
     socket.on('move', (move) => {
-      if (!currentRoom) return;
-      games[currentRoom].moves.push(move);
-      socket.to(currentRoom).emit('move', move);
+      if (!currentRoom || !games[currentRoom]) return;
+      const game = games[currentRoom];
+      // Only accept move from correct player
+      const expectedSocket = game.sockets[game.turn];
+      if (socket.id !== expectedSocket) return;
+      // Save move
+      game.moves.push(move);
+      // Switch turn
+      game.turn = (game.turn === 'white' ? 'black' : 'white');
+      // Broadcast move to both players, include nextTurn
+      io.to(currentRoom).emit('move', { ...move, nextTurn: game.turn });
     });
 
     socket.on('reset', () => {
-      if (!currentRoom) return;
+      if (!currentRoom || !games[currentRoom]) return;
       games[currentRoom].moves = [];
+      games[currentRoom].turn = 'white';
       io.to(currentRoom).emit('reset');
     });
 
     socket.on('disconnect', () => {
       if (currentRoom && rooms[currentRoom]) {
         rooms[currentRoom] = rooms[currentRoom].filter(id => id !== socket.id);
-        // Optionally notify the other player
+        if (games[currentRoom]) delete games[currentRoom];
         socket.to(currentRoom).emit('opponentLeft');
       }
     });
