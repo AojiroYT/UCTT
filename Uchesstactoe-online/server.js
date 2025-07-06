@@ -6,6 +6,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+console.log('Server file loaded');
+
 app.use(express.static('public'));
 
 const games = {};
