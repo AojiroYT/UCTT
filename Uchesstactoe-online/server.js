@@ -1,39 +1,61 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
+  const express = require('express');
+  const http = require('http');
+  const { Server } = require('socket.io');
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+  const app = express();
+  const server = http.createServer(app);
+  const io = new Server(server);
 
-console.log('Server file loaded');
+  console.log('Server file loaded');
 
-app.use(express.static('public'));
+  app.use(express.static('public'));
 
-const games = {};
+  const games = {};
+  const rooms = {}; // { roomId: [socketId1, socketId2] }
 
-io.on('connection', (socket) => {
-  let currentRoom = null;
+  io.on('connection', (socket) => {
+    let currentRoom = null;
 
-  socket.on('join', (roomId) => {
-    socket.join(roomId);
-    currentRoom = roomId;
-    if (!games[roomId]) games[roomId] = { moves: [] };
-    socket.emit('init', games[roomId].moves);
+    socket.on('join', (roomId) => {
+      socket.join(roomId);
+      currentRoom = roomId;
+      if (!rooms[roomId]) rooms[roomId] = [];
+      if (!rooms[roomId].includes(socket.id)) rooms[roomId].push(socket.id);
+
+      // Wait for 2 players
+      if (rooms[roomId].length === 2) {
+        // Assign colors
+        io.to(rooms[roomId][0]).emit('assignColor', 'white');
+        io.to(rooms[roomId][1]).emit('assignColor', 'black');
+        // Send current game state to both
+        if (!games[roomId]) games[roomId] = { moves: [] };
+        io.to(roomId).emit('init', games[roomId].moves);
+      } else {
+        // Tell the first player to wait
+        socket.emit('waitingForOpponent');
+      }
+    });
+
+    socket.on('move', (move) => {
+      if (!currentRoom) return;
+      games[currentRoom].moves.push(move);
+      socket.to(currentRoom).emit('move', move);
+    });
+
+    socket.on('reset', () => {
+      if (!currentRoom) return;
+      games[currentRoom].moves = [];
+      io.to(currentRoom).emit('reset');
+    });
+
+    socket.on('disconnect', () => {
+      if (currentRoom && rooms[currentRoom]) {
+        rooms[currentRoom] = rooms[currentRoom].filter(id => id !== socket.id);
+        // Optionally notify the other player
+        socket.to(currentRoom).emit('opponentLeft');
+      }
+    });
   });
 
-  socket.on('move', (move) => {
-    if (!currentRoom) return;
-    games[currentRoom].moves.push(move);
-    socket.to(currentRoom).emit('move', move);
-  });
-
-  socket.on('reset', () => {
-    if (!currentRoom) return;
-    games[currentRoom].moves = [];
-    io.to(currentRoom).emit('reset');
-  });
-});
-
-const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  const PORT = process.env.PORT || 10000;
+  server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
