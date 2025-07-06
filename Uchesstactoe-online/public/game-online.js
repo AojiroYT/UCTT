@@ -1157,3 +1157,11 @@ createBoard();
 placePieces();
 initializeTransparency();
 setupBoardEventsMultiplayer();
+
+socket.on('waitingForOpponent', () => {
+  alert('Waiting for opponent to join...');
+});
+
+socket.on('opponentLeft', () => {
+  alert('Your opponent has left the game.');
+});
