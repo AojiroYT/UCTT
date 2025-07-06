@@ -1122,6 +1122,12 @@ function setupBoardEventsMultiplayer() {
     }
     // Move piece
     if (selectedPiece && cell.classList.contains('highlight')) {
+      if (!selectedPiece || !selectedPiece.parentElement) {
+        clearHighlights();
+        selectedPiece = null;
+        validMoves = [];
+        return;
+      }
       const fromCell = selectedPiece.parentElement;
       const fromRow = Number(fromCell.dataset.row);
       const fromCol = Number(fromCell.dataset.col);
