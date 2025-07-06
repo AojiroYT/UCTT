@@ -978,13 +978,15 @@ const boardDiv = document.getElementById('board');
 boardDiv.style.display = 'none';
 
 // Clicking anywhere on the slider or its parent toggles its value (only if Play not pressed)
-setSlider.parentElement.addEventListener('click', e => {
-  if (!playBtn.disabled) {
-    setSlider.value = setSlider.value === '0' ? '1' : '0';
-    e.preventDefault();
-    e.stopPropagation();
-  }
-});
+if (setSlider && setSlider.parentElement) {
+  setSlider.parentElement.addEventListener('click', e => {
+    if (!playBtn.disabled) {
+      setSlider.value = setSlider.value === '0' ? '1' : '0';
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+}
 setSlider.addEventListener('click', e => {
   if (!playBtn.disabled) {
     setSlider.value = setSlider.value === '0' ? '1' : '0';
@@ -992,13 +994,15 @@ setSlider.addEventListener('click', e => {
     e.stopPropagation();
   }
 });
-checkmateSlider.parentElement.addEventListener('click', e => {
-  if (!playBtn.disabled) {
-    checkmateSlider.value = checkmateSlider.value === '0' ? '1' : '0';
-    e.preventDefault();
-    e.stopPropagation();
-  }
-});
+if (checkmateSlider && checkmateSlider.parentElement) {
+  checkmateSlider.parentElement.addEventListener('click', e => {
+    if (!playBtn.disabled) {
+      checkmateSlider.value = checkmateSlider.value === '0' ? '1' : '0';
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+}
 checkmateSlider.addEventListener('click', e => {
   if (!playBtn.disabled) {
     checkmateSlider.value = checkmateSlider.value === '0' ? '1' : '0';
