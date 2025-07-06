@@ -8,9 +8,6 @@ let hasMoved = {}; // Track if king/rooks have moved for castling
 
 const socket = io();
 
-// Join a room (could be a prompt or a URL param)
-socket.emit('join', 'room1');
-
 // 盤を作成
 function createBoard() {
   for (let row = 0; row < 9; row++) {
