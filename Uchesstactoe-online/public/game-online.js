@@ -530,6 +530,79 @@ function showPromotionDialog(color, cell, pieceElem) {
   });
 }
 
+// Show game over dialog centered on the board
+function showGameOverDialog(message) {
+  showGameButtons(false);
+  setSlider.disabled = false;
+  checkmateSlider.disabled = false;
+  playBtn.disabled = false;
+  playBtn.style.opacity = 1;
+  // Remove any existing dialog
+  const oldDialog = document.getElementById('gameOverDialog');
+  if (oldDialog) oldDialog.remove();
+
+  // --- Fix: Always get board position, even if hidden ---
+  // Temporarily show board if hidden to get position
+  let restoreBoardDisplay = null;
+  if (boardDiv.style.display === 'none') {
+    restoreBoardDisplay = true;
+    boardDiv.style.display = '';
+  }
+  const boardRect = getBoardRect();
+  if (restoreBoardDisplay) {
+    boardDiv.style.display = 'none';
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'gameOverDialog';
+  overlay.style.position = 'fixed';
+  overlay.style.left = boardRect.left + 'px';
+  overlay.style.top = boardRect.top + 'px';
+  overlay.style.width = boardRect.width + 'px';
+  overlay.style.height = boardRect.height + 'px';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.zIndex = 2000;
+  overlay.style.background = 'rgba(0,0,0,0.25)';
+  const dialog = document.createElement('div');
+  dialog.style.background = '#fff';
+  dialog.style.border = '2px solid #333';
+  dialog.style.padding = '20px';
+  dialog.style.display = 'flex';
+  dialog.style.flexDirection = 'column';
+  dialog.style.alignItems = 'center';
+  dialog.style.gap = '16px';
+  const msg = document.createElement('div');
+  msg.textContent = message;
+  msg.style.fontSize = '1.2em';
+  dialog.appendChild(msg);
+  const btnRow = document.createElement('div');
+  btnRow.style.display = 'flex';
+  btnRow.style.gap = '12px';
+  const seeBtn = document.createElement('button');
+  seeBtn.textContent = 'See result';
+  seeBtn.onclick = () => overlay.remove();
+  const againBtn = document.createElement('button');
+  againBtn.textContent = 'Play again';
+  againBtn.onclick = () => {
+    overlay.remove();
+    showBoardSelector(idx => {
+      setInitialPositionsFromLayout(idx);
+      resetBoard();
+    }, 'Choose a board layout for the next game:');
+  };
+  btnRow.appendChild(seeBtn);
+  btnRow.appendChild(againBtn);
+  dialog.appendChild(btnRow);
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
+  // Hide board after overlay is shown (if needed)
+  if (restoreBoardDisplay) {
+    setTimeout(() => { boardDiv.style.display = 'none'; }, 0);
+  }
+}
+
 // --- Annotation logic ---
 const annotationHighlights = new Set();
 let annotationArrows = [];
@@ -888,89 +961,83 @@ function isKingInCheck(color) {
 let checkmateEnabled = true;
 let gameStarted = false;
 
-const boardToggle = document.getElementById('boardToggle');
-const checkmateToggle = document.getElementById('checkmateToggle');
+const setSlider = document.getElementById('setSlider');
+const setLabel = document.getElementById('setLabel');
+const checkmateSlider = document.getElementById('checkmateSlider');
+const checkmateLabel = document.getElementById('checkmateLabel');
 const playBtn = document.getElementById('playBtn');
+const boardDiv = document.getElementById('board');
+
+// Hide board until Play is pressed
+boardDiv.style.display = 'none';
+
+// Clicking anywhere on the slider or its parent toggles its value (only if Play not pressed)
+setSlider.parentElement.addEventListener('click', e => {
+  if (!playBtn.disabled) {
+    setSlider.value = setSlider.value === '0' ? '1' : '0';
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});
+setSlider.addEventListener('click', e => {
+  if (!playBtn.disabled) {
+    setSlider.value = setSlider.value === '0' ? '1' : '0';
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});
+checkmateSlider.parentElement.addEventListener('click', e => {
+  if (!playBtn.disabled) {
+    checkmateSlider.value = checkmateSlider.value === '0' ? '1' : '0';
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});
+checkmateSlider.addEventListener('click', e => {
+  if (!playBtn.disabled) {
+    checkmateSlider.value = checkmateSlider.value === '0' ? '1' : '0';
+    e.preventDefault();
+    e.stopPropagation();
+  }
+});
+
+// Add resign and offer draw buttons
 const settingsBar = document.getElementById('settingsBar');
-const resignBtn = document.getElementById('resignBtn');
-const resignContainer = document.getElementById('resignContainer');
+const resignBtn = document.createElement('button');
+resignBtn.textContent = 'Resign';
+resignBtn.style.display = 'none';
+settingsBar.appendChild(resignBtn);
+const drawBtn = document.createElement('button');
+drawBtn.textContent = 'Offer Draw';
+drawBtn.style.display = 'none';
+settingsBar.appendChild(drawBtn);
 
-// Hide resign button and settings bar until Play is pressed
-settingsBar.style.display = '';
-resignContainer.style.display = 'none';
-
-// Toggle logic for Board set
-boardToggle.addEventListener('click', () => {
-  if (playBtn.disabled) return;
-  const current = boardToggle.getAttribute('data-value') || '0';
-  if (current === '0') {
-    boardToggle.setAttribute('data-value', '1');
-    boardToggle.textContent = 'Set 2';
-  } else {
-    boardToggle.setAttribute('data-value', '0');
-    boardToggle.textContent = 'Set 1';
-  }
-});
-
-// Toggle logic for Checkmate
-checkmateToggle.addEventListener('click', () => {
-  if (playBtn.disabled) return;
-  const current = checkmateToggle.getAttribute('data-value') || '1';
-  if (current === '1') {
-    checkmateToggle.setAttribute('data-value', '0');
-    checkmateToggle.textContent = 'Disabled';
-    checkmateToggle.setAttribute('aria-pressed', 'false');
-    checkmateToggle.style.background = 'linear-gradient(90deg, #eee 50%, #28a745 50%)'; // right green
-    checkmateToggle.style.color = '#222';
-  } else {
-    checkmateToggle.setAttribute('data-value', '1');
-    checkmateToggle.textContent = 'Enabled';
-    checkmateToggle.setAttribute('aria-pressed', 'true');
-    checkmateToggle.style.background = 'linear-gradient(90deg, #28a745 50%, #eee 50%)'; // left green
-    checkmateToggle.style.color = '#222';
-  }
-});
-// On page load, ensure the button matches the initial state
-checkmateToggle.textContent = 'Enabled';
-checkmateToggle.setAttribute('data-value', '1');
-checkmateToggle.style.background = 'linear-gradient(90deg, #28a745 50%, #eee 50%)';
-checkmateToggle.style.color = '#222';
-
-// Play button logic
-playBtn.addEventListener('click', () => {
-  // Apply settings and start game
-  const idx = Number(boardToggle.getAttribute('data-value') || '0');
-  setInitialPositionsFromLayout(idx);
-  checkmateEnabled = checkmateToggle.getAttribute('data-value') === '1';
-  board.style.display = '';
-  resetBoard();
-  // Lock settings
-  boardToggle.disabled = true;
-  checkmateToggle.disabled = true;
-  playBtn.disabled = true;
-  playBtn.style.opacity = 0.5;
-  // Hide all settings UI
-  settingsBar.style.display = 'none';
-  resignContainer.style.display = '';
-});
-
-function showGameOverDialog(message) {
-  // Show all settings UI again
-  settingsBar.style.display = '';
-  resignContainer.style.display = 'none';
-  boardToggle.disabled = false;
-  checkmateToggle.disabled = false;
-  playBtn.disabled = false;
-  playBtn.style.opacity = 1;
-  // Remove any existing dialog
-  const oldDialog = document.getElementById('gameOverDialog');
-  if (oldDialog) oldDialog.remove();
-  // Show dialog (reuse your existing dialog logic or add a simple alert for now)
-  alert(message);
+function showGameButtons(show) {
+  resignBtn.style.display = show ? '' : 'none';
+  drawBtn.style.display = show ? '' : 'none';
 }
 
 resignBtn.addEventListener('click', () => {
   showGameOverDialog(`${currentPlayer === 1 ? 'White' : 'Black'} resigns! ${currentPlayer === 1 ? 'Black' : 'White'} wins!`);
+});
+drawBtn.addEventListener('click', () => {
+  showGameOverDialog('Draw offered. Game ends in a draw!');
+});
+
+// Modify Play button logic to show/hide game buttons
+playBtn.addEventListener('click', () => {
+  // Apply settings and start game
+  const idx = Number(setSlider.value);
+  setInitialPositionsFromLayout(idx);
+  checkmateEnabled = checkmateSlider.value === '1';
+  boardDiv.style.display = '';
+  resetBoard();
+  // Lock settings
+  setSlider.disabled = true;
+  checkmateSlider.disabled = true;
+  playBtn.disabled = true;
+  playBtn.style.opacity = 0.5;
+  showGameButtons(true);
 });
 
 // --- Multiplayer Setup ---
@@ -1097,46 +1164,3 @@ socket.on('waitingForOpponent', () => {
 socket.on('opponentLeft', () => {
   alert('Your opponent has left the game.');
 });
-
-// --- Mode selection modal logic ---
-const modeModal = document.getElementById('modeModal');
-const singleBtn = document.getElementById('singleBtn');
-const multiBtn = document.getElementById('multiBtn');
-
-let isMultiplayer = false;
-
-singleBtn.addEventListener('click', () => {
-  isMultiplayer = false;
-  modeModal.style.display = 'none';
-  startSinglePlayer();
-});
-
-multiBtn.addEventListener('click', () => {
-  isMultiplayer = true;
-  modeModal.style.display = 'none';
-  startMultiplayer();
-});
-
-function startSinglePlayer() {
-  // Local game setup (reuse your single-player logic)
-  createBoard();
-  placePieces();
-  initializeTransparency();
-  setupBoardEvents();
-}
-
-function startMultiplayer() {
-  // Multiplayer setup (reuse your multiplayer logic)
-  promptRoomAndJoin();
-  createBoard();
-  placePieces();
-  initializeTransparency();
-  setupBoardEventsMultiplayer();
-}
-
-// Hide everything until mode is chosen
-settingsBar.style.display = 'none';
-resignContainer.style.display = 'none';
-board.style.display = 'none';
-
-// After mode is chosen, show settingsBar and board as appropriate in startSinglePlayer/startMultiplayer
