@@ -724,6 +724,12 @@ function setupBoardEvents() {
       // Remove opponent piece if present
       const captured = cell.querySelector('.piece');
       const fromCell = selectedPiece.parentElement;
+      if (!fromCell) {
+        clearHighlights();
+        selectedPiece = null;
+        validMoves = [];
+        return;
+      }
       const fromRow = Number(fromCell.dataset.row);
       const fromCol = Number(fromCell.dataset.col);
       const toRow = Number(cell.dataset.row);
