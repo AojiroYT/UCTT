@@ -1170,102 +1170,37 @@ function setupBoardEventsMultiplayer() {
 }
 
 // --- Initialization ---
-promptRoomAndJoin();
-createBoard();
-placePieces();
-initializeTransparency();
-setupBoardEventsMultiplayer();
+socket.emit('join', 'room1');
 
-socket.on('waitingForOpponent', () => {
-  alert('Waiting for opponent to join...');
-});
+// Show game UI by default
+if (boardDiv) boardDiv.style.display = '';
+if (settingsBar) settingsBar.style.display = 'flex';
 
-socket.on('opponentLeft', () => {
-  alert('Your opponent has left the game.');
-});
+// --- Mode Selection Logic ---
+const modeSelect = document.getElementById('modeSelect');
+const singleModeBtn = document.getElementById('singleModeBtn');
+const multiModeBtn = document.getElementById('multiModeBtn');
 
-// --- Lobby and Room Join/Create Logic ---
-const lobbyDiv = document.getElementById('lobby');
-const createRoomBtn = document.getElementById('createRoomBtn');
-const listRoomsBtn = document.getElementById('listRoomsBtn');
-const roomCreateDiv = document.getElementById('roomCreate');
-const roomJoinDiv = document.getElementById('roomJoin');
-const confirmCreateBtn = document.getElementById('confirmCreateBtn');
-const confirmJoinBtn = document.getElementById('confirmJoinBtn');
-const showJoinBtn = document.getElementById('showJoinBtn');
-const publicRoomsDiv = document.getElementById('publicRooms');
-const roomNameInput = document.getElementById('roomNameInput');
-const roomPassInput = document.getElementById('roomPassInput');
-const joinRoomNameInput = document.getElementById('joinRoomNameInput');
-const joinRoomPassInput = document.getElementById('joinRoomPassInput');
-
-function showLobby() {
-  lobbyDiv.style.display = 'flex';
-  boardDiv.style.display = 'none';
-  settingsBar.style.display = 'none';
+function showModeSelect() {
+  if (modeSelect) modeSelect.style.display = 'flex';
+  if (boardDiv) boardDiv.style.display = 'none';
 }
 function showGameUI() {
-  lobbyDiv.style.display = 'none';
-  boardDiv.style.display = '';
-  settingsBar.style.display = 'flex';
+  if (modeSelect) modeSelect.style.display = 'none';
+  if (boardDiv) boardDiv.style.display = '';
 }
-// Show lobby on page load
-showLobby();
 
-createRoomBtn.onclick = () => {
-  roomCreateDiv.style.display = 'flex';
-  roomJoinDiv.style.display = 'none';
-  publicRoomsDiv.style.display = 'none';
-};
-listRoomsBtn.onclick = () => {
-  socket.emit('listRooms');
-  publicRoomsDiv.style.display = 'block';
-  roomCreateDiv.style.display = 'none';
-  roomJoinDiv.style.display = 'none';
-};
-showJoinBtn.onclick = () => {
-  roomJoinDiv.style.display = 'flex';
-  roomCreateDiv.style.display = 'none';
-  publicRoomsDiv.style.display = 'none';
-};
-confirmCreateBtn.onclick = () => {
-  const name = roomNameInput.value.trim();
-  const pass = roomPassInput.value;
-  if (!name) return alert('Please enter a room name.');
-  socket.emit('createRoom', { name, pass });
-};
-confirmJoinBtn.onclick = () => {
-  const name = joinRoomNameInput.value.trim();
-  const pass = joinRoomPassInput.value;
-  if (!name) return alert('Please enter a room name.');
-  socket.emit('joinRoom', { name, pass });
-};
-socket.on('roomCreated', (room) => {
+showModeSelect();
+
+singleModeBtn.onclick = () => {
   showGameUI();
-  socket.emit('join', room.name);
-});
-socket.on('roomJoined', (room) => {
+  // TODO: Implement single player logic (no socket)
+  // For now, just show the board and allow local play
+  // You may want to disable or hide multiplayer-specific UI
+};
+
+multiModeBtn.onclick = () => {
   showGameUI();
-  socket.emit('join', room.name);
-});
-socket.on('roomError', (msg) => {
-  alert(msg);
-});
-socket.on('roomList', (rooms) => {
-  publicRoomsDiv.innerHTML = '<h3>Public Rooms</h3>';
-  if (!rooms.length) {
-    publicRoomsDiv.innerHTML += '<div>No public rooms available.</div>';
-    return;
-  }
-  rooms.forEach(room => {
-    const btn = document.createElement('button');
-    btn.textContent = room.name + (room.hasPassword ? ' (Password)' : '');
-    btn.onclick = () => {
-      joinRoomNameInput.value = room.name;
-      roomJoinDiv.style.display = 'flex';
-      roomCreateDiv.style.display = 'none';
-      publicRoomsDiv.style.display = 'none';
-    };
-    publicRoomsDiv.appendChild(btn);
-  });
-});
+  // Multiplayer: join default room as before
+  socket.emit('join', 'room1');
+};
