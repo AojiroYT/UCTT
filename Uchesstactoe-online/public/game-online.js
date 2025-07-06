@@ -1097,3 +1097,46 @@ socket.on('waitingForOpponent', () => {
 socket.on('opponentLeft', () => {
   alert('Your opponent has left the game.');
 });
+
+// --- Mode selection modal logic ---
+const modeModal = document.getElementById('modeModal');
+const singleBtn = document.getElementById('singleBtn');
+const multiBtn = document.getElementById('multiBtn');
+
+let isMultiplayer = false;
+
+singleBtn.addEventListener('click', () => {
+  isMultiplayer = false;
+  modeModal.style.display = 'none';
+  startSinglePlayer();
+});
+
+multiBtn.addEventListener('click', () => {
+  isMultiplayer = true;
+  modeModal.style.display = 'none';
+  startMultiplayer();
+});
+
+function startSinglePlayer() {
+  // Local game setup (reuse your single-player logic)
+  createBoard();
+  placePieces();
+  initializeTransparency();
+  setupBoardEvents();
+}
+
+function startMultiplayer() {
+  // Multiplayer setup (reuse your multiplayer logic)
+  promptRoomAndJoin();
+  createBoard();
+  placePieces();
+  initializeTransparency();
+  setupBoardEventsMultiplayer();
+}
+
+// Hide everything until mode is chosen
+settingsBar.style.display = 'none';
+resignContainer.style.display = 'none';
+board.style.display = 'none';
+
+// After mode is chosen, show settingsBar and board as appropriate in startSinglePlayer/startMultiplayer
