@@ -1041,14 +1041,14 @@ drawBtn.addEventListener('click', () => {
 // Modify Play button logic to show/hide game buttons
 playBtn.addEventListener('click', () => {
   // Apply settings and start game
-  const idx = Number(setSlider.value);
+  const idx = setSlider ? Number(setSlider.value) : 0;
   setInitialPositionsFromLayout(idx);
-  checkmateEnabled = checkmateSlider.value === '1';
+  checkmateEnabled = checkmateSlider ? checkmateSlider.value === '1' : true;
   boardDiv.style.display = '';
   resetBoard();
   // Lock settings
-  setSlider.disabled = true;
-  checkmateSlider.disabled = true;
+  if (setSlider) setSlider.disabled = true;
+  if (checkmateSlider) checkmateSlider.disabled = true;
   playBtn.disabled = true;
   playBtn.style.opacity = 0.5;
   showGameButtons(true);
