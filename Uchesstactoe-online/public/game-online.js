@@ -1186,3 +1186,90 @@ socket.on('waitingForOpponent', () => {
 socket.on('opponentLeft', () => {
   alert('Your opponent has left the game.');
 });
+
+// --- Lobby and Room Join/Create Logic ---
+const lobbyDiv = document.getElementById('lobby');
+const boardDiv = document.getElementById('board');
+const createRoomBtn = document.getElementById('createRoomBtn');
+const listRoomsBtn = document.getElementById('listRoomsBtn');
+const roomCreateDiv = document.getElementById('roomCreate');
+const roomJoinDiv = document.getElementById('roomJoin');
+const confirmCreateBtn = document.getElementById('confirmCreateBtn');
+const confirmJoinBtn = document.getElementById('confirmJoinBtn');
+const showJoinBtn = document.getElementById('showJoinBtn');
+const publicRoomsDiv = document.getElementById('publicRooms');
+const roomNameInput = document.getElementById('roomNameInput');
+const roomPassInput = document.getElementById('roomPassInput');
+const joinRoomNameInput = document.getElementById('joinRoomNameInput');
+const joinRoomPassInput = document.getElementById('joinRoomPassInput');
+
+function showLobby() {
+  lobbyDiv.style.display = 'flex';
+  boardDiv.style.display = 'none';
+  settingsBar.style.display = 'none';
+}
+function showGameUI() {
+  lobbyDiv.style.display = 'none';
+  boardDiv.style.display = '';
+  settingsBar.style.display = 'flex';
+}
+// Show lobby on page load
+showLobby();
+
+createRoomBtn.onclick = () => {
+  roomCreateDiv.style.display = 'flex';
+  roomJoinDiv.style.display = 'none';
+  publicRoomsDiv.style.display = 'none';
+};
+listRoomsBtn.onclick = () => {
+  socket.emit('listRooms');
+  publicRoomsDiv.style.display = 'block';
+  roomCreateDiv.style.display = 'none';
+  roomJoinDiv.style.display = 'none';
+};
+showJoinBtn.onclick = () => {
+  roomJoinDiv.style.display = 'flex';
+  roomCreateDiv.style.display = 'none';
+  publicRoomsDiv.style.display = 'none';
+};
+confirmCreateBtn.onclick = () => {
+  const name = roomNameInput.value.trim();
+  const pass = roomPassInput.value;
+  if (!name) return alert('Please enter a room name.');
+  socket.emit('createRoom', { name, pass });
+};
+confirmJoinBtn.onclick = () => {
+  const name = joinRoomNameInput.value.trim();
+  const pass = joinRoomPassInput.value;
+  if (!name) return alert('Please enter a room name.');
+  socket.emit('joinRoom', { name, pass });
+};
+socket.on('roomCreated', (room) => {
+  showGameUI();
+  socket.emit('join', room.name);
+});
+socket.on('roomJoined', (room) => {
+  showGameUI();
+  socket.emit('join', room.name);
+});
+socket.on('roomError', (msg) => {
+  alert(msg);
+});
+socket.on('roomList', (rooms) => {
+  publicRoomsDiv.innerHTML = '<h3>Public Rooms</h3>';
+  if (!rooms.length) {
+    publicRoomsDiv.innerHTML += '<div>No public rooms available.</div>';
+    return;
+  }
+  rooms.forEach(room => {
+    const btn = document.createElement('button');
+    btn.textContent = room.name + (room.hasPassword ? ' (Password)' : '');
+    btn.onclick = () => {
+      joinRoomNameInput.value = room.name;
+      roomJoinDiv.style.display = 'flex';
+      roomCreateDiv.style.display = 'none';
+      publicRoomsDiv.style.display = 'none';
+    };
+    publicRoomsDiv.appendChild(btn);
+  });
+});
