@@ -1179,7 +1179,8 @@ function setupBoardEventsMultiplayer() {
 }
 
 // --- Initialization ---
-socket.emit('join', 'room1');
+// Remove any socket.emit('join', 'room1') or similar automatic join on page load
+// Only emit 'join' after 'roomCreated' or 'roomJoined' events, as already handled
 
 // Show game UI by default
 if (boardDiv) boardDiv.style.display = '';
