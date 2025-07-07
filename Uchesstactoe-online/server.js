@@ -93,9 +93,14 @@
     });
 
     socket.on('roomCreated', (room) => {
-      showGameUI();
       socket.emit('join', room.name);
       setupBoardEventsMultiplayer();
+      isHost = (room.host === socket.id);
+      currentRoomName = room.name;
+      setTimeout(() => {
+        playBtn.disabled = !isHost;
+        playBtn.style.opacity = isHost ? 1 : 0.5;
+      }, 200); // 200ms delay to ensure socket.id is set
     });
 
     socket.on('roomJoined', (room) => {
