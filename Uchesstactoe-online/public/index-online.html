@@ -200,6 +200,9 @@
     <div class="board" id="board" style="position:relative;">
         <svg id="annotationOverlay" style="width:100%; height:100%; position:absolute; top:0; left:0; z-index:5; pointer-events:none;"></svg>
     </div>
+    <div id="resignContainer" style="position:fixed; bottom:32px; right:32px; z-index:3000; display:none;">
+        <button id="resignBtn" style="padding: 20px 48px; font-size: 2em; background: #dc3545; color: #fff; border: none; border-radius: 16px; cursor: pointer; font-weight: bold;">Resign</button>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="game-online.js"></script>
 
