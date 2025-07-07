@@ -1082,6 +1082,7 @@ socket.on('move', (move) => {
 });
 
 function sendMoveToServer(move) {
+  console.log('Sending move to server:', move);
   socket.emit('move', move);
 }
 
