@@ -91,24 +91,6 @@
         // If host leaves, optionally assign a new host or close the room
       }
     });
-
-    socket.on('roomCreated', (room) => {
-      console.log('roomCreated event received', room);
-      socket.emit('join', room.name);
-      setupBoardEventsMultiplayer();
-      isHost = (room.host === socket.id);
-      currentRoomName = room.name;
-      setTimeout(() => {
-        playBtn.disabled = !isHost;
-        playBtn.style.opacity = isHost ? 1 : 0.5;
-      }, 200); // 200ms delay to ensure socket.id is set
-    });
-
-    socket.on('roomJoined', (room) => {
-      showGameUI();
-      socket.emit('join', room.name);
-      setupBoardEventsMultiplayer();
-    });
   });
 
   const PORT = process.env.PORT || 10000;
