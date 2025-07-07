@@ -1270,8 +1270,8 @@ let isHost = false;
 let currentRoomName = null;
 
 socket.on('roomCreated', (room) => {
-  // Do not show game UI yet
-  socket.emit('join', room.name);
+  // Host has created a room: hide lobby, show game UI, enable Play button for host
+  showGameUI(); // Hide lobby, show board/settings
   setupBoardEventsMultiplayer();
   isHost = (room.host === socket.id);
   currentRoomName = room.name;
@@ -1281,12 +1281,11 @@ socket.on('roomCreated', (room) => {
 });
 
 socket.on('roomJoined', (room) => {
-  // Do not show game UI yet
-  socket.emit('join', room.name);
+  // Guest has joined a room: hide lobby, show game UI, Play button only for host
+  showGameUI();
   setupBoardEventsMultiplayer();
   isHost = (room.host === socket.id);
   currentRoomName = room.name;
-  // Only enable Play button for host
   playBtn.disabled = !isHost;
   playBtn.style.opacity = isHost ? 1 : 0.5;
 });
