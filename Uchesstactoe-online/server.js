@@ -64,7 +64,7 @@
     socket.on('move', (move) => {
       if (!currentRoom) return;
       games[currentRoom].moves.push(move);
-      socket.to(currentRoom).emit('move', move);
+      io.to(currentRoom).emit('move', move);
     });
 
     socket.on('reset', () => {
