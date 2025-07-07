@@ -46,6 +46,7 @@
       currentRoom = roomId;
       if (!rooms[roomId]) rooms[roomId] = [];
       if (!rooms[roomId].includes(socket.id)) rooms[roomId].push(socket.id);
+      console.log(`Socket ${socket.id} joined room ${roomId}`);
 
       // Wait for 2 players
       if (rooms[roomId].length === 2) {
@@ -62,6 +63,7 @@
     });
 
     socket.on('move', (move) => {
+      console.log(`Received move from ${socket.id} in room ${currentRoom}`);
       if (!currentRoom) return;
       games[currentRoom].moves.push(move);
       io.to(currentRoom).emit('move', move);
