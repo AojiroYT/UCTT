@@ -93,6 +93,7 @@
     });
 
     socket.on('roomCreated', (room) => {
+      console.log('roomCreated event received', room);
       socket.emit('join', room.name);
       setupBoardEventsMultiplayer();
       isHost = (room.host === socket.id);
