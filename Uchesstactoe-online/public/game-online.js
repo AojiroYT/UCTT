@@ -1257,17 +1257,56 @@ confirmJoinBtn.onclick = () => {
   if (!name) return alert('Please enter a room name.');
   socket.emit('joinRoom', { name, pass });
 };
+let isHost = false;
+let currentRoomName = null;
+
 socket.on('roomCreated', (room) => {
-  showGameUI();
+  // Do not show game UI yet
   socket.emit('join', room.name);
+  setupBoardEventsMultiplayer();
+  isHost = (room.host === socket.id);
+  currentRoomName = room.name;
+  if (isHost) showStartGameButton();
 });
+
 socket.on('roomJoined', (room) => {
-  showGameUI();
+  // Do not show game UI yet
   socket.emit('join', room.name);
+  setupBoardEventsMultiplayer();
+  isHost = (room.host === socket.id);
+  currentRoomName = room.name;
+  // Only show start button if host (shouldn't happen for joiner, but safe)
+  if (isHost) showStartGameButton();
 });
+
+function showStartGameButton() {
+  let btn = document.getElementById('startGameBtn');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'startGameBtn';
+    btn.textContent = 'Start Game';
+    btn.style.fontSize = '1.5em';
+    btn.style.padding = '16px 32px';
+    btn.style.margin = '24px auto';
+    btn.style.display = 'block';
+    document.body.appendChild(btn); // Or append to a specific container
+    btn.onclick = () => {
+      socket.emit('startGame', currentRoomName);
+      btn.style.display = 'none';
+    };
+  }
+  btn.style.display = '';
+}
+
+socket.on('gameStarted', () => {
+  showGameUI();
+  // Optionally, reset the board or do any other game start logic
+});
+
 socket.on('roomError', (msg) => {
   alert(msg);
 });
+
 socket.on('roomList', (rooms) => {
   publicRoomsDiv.innerHTML = '<h3>Public Rooms</h3>';
   if (!rooms.length) {
