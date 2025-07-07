@@ -66,6 +66,7 @@
       console.log(`Received move from ${socket.id} in room ${currentRoom}`);
       if (!currentRoom) return;
       games[currentRoom].moves.push(move);
+      console.log('About to send move:', move);
       io.to(currentRoom).emit('move', move);
     });
 
