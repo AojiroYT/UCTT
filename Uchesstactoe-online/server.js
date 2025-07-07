@@ -11,7 +11,7 @@
   app.use(express.static('public'));
 
   const games = {};
-  const rooms = {}; // { roomId: [socketId1, socketId2] }
+  const rooms = {}; // { roomId: { host: socketId, players: [socketId, ...] } }
 
   io.on('connection', (socket) => {
     let currentRoom = null;
@@ -29,8 +29,8 @@
         socket.emit('roomError', 'Room already exists.');
         return;
       }
-      rooms[name] = [];
-      socket.emit('roomCreated', { name, hasPassword: !!pass });
+      rooms[name] = { host: socket.id, players: [socket.id] };
+      socket.emit('roomCreated', { name, hasPassword: !!pass, host: socket.id });
     });
 
     socket.on('joinRoom', ({ name, pass }) => {
@@ -38,21 +38,22 @@
         socket.emit('roomError', 'Room does not exist.');
         return;
       }
-      socket.emit('roomJoined', { name, hasPassword: false });
+      rooms[name].players.push(socket.id);
+      socket.emit('roomJoined', { name, hasPassword: false, host: rooms[name].host });
     });
 
     socket.on('join', (roomId) => {
       socket.join(roomId);
       currentRoom = roomId;
-      if (!rooms[roomId]) rooms[roomId] = [];
-      if (!rooms[roomId].includes(socket.id)) rooms[roomId].push(socket.id);
+      if (!rooms[roomId]) rooms[roomId] = { host: socket.id, players: [socket.id] };
+      if (!rooms[roomId].players.includes(socket.id)) rooms[roomId].players.push(socket.id);
       console.log(`Socket ${socket.id} joined room ${roomId}`);
 
       // Wait for 2 players
-      if (rooms[roomId].length === 2) {
+      if (rooms[roomId].players.length === 2) {
         // Assign colors
-        io.to(rooms[roomId][0]).emit('assignColor', 'white');
-        io.to(rooms[roomId][1]).emit('assignColor', 'black');
+        io.to(rooms[roomId].players[0]).emit('assignColor', 'white');
+        io.to(rooms[roomId].players[1]).emit('assignColor', 'black');
         // Send current game state to both
         if (!games[roomId]) games[roomId] = { moves: [] };
         io.to(roomId).emit('init', games[roomId].moves);
@@ -62,11 +63,17 @@
       }
     });
 
+    // Host starts the game
+    socket.on('startGame', (roomName) => {
+      if (rooms[roomName] && rooms[roomName].host === socket.id) {
+        io.to(roomName).emit('gameStarted');
+      }
+    });
+
     socket.on('move', (move) => {
       console.log(`Received move from ${socket.id} in room ${currentRoom}`);
       if (!currentRoom) return;
       games[currentRoom].moves.push(move);
-      console.log('About to send move:', move);
       io.to(currentRoom).emit('move', move);
     });
 
@@ -78,10 +85,23 @@
 
     socket.on('disconnect', () => {
       if (currentRoom && rooms[currentRoom]) {
-        rooms[currentRoom] = rooms[currentRoom].filter(id => id !== socket.id);
+        rooms[currentRoom].players = rooms[currentRoom].players.filter(id => id !== socket.id);
         // Optionally notify the other player
         socket.to(currentRoom).emit('opponentLeft');
+        // If host leaves, optionally assign a new host or close the room
       }
+    });
+
+    socket.on('roomCreated', (room) => {
+      showGameUI();
+      socket.emit('join', room.name);
+      setupBoardEventsMultiplayer();
+    });
+
+    socket.on('roomJoined', (room) => {
+      showGameUI();
+      socket.emit('join', room.name);
+      setupBoardEventsMultiplayer();
     });
   });
 
