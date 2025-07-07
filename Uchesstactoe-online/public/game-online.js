@@ -1067,7 +1067,14 @@ function promptRoomAndJoin() {
 socket.on('assignColor', (color) => {
   myColor = color;
   isMyTurn = (myColor === 'white');
-  alert(`You are ${myColor}. ${isMyTurn ? 'You move first.' : 'Waiting for opponent...'}`);
+});
+
+socket.on('waitingForOpponent', () => {
+  // Removed alert
+});
+
+socket.on('opponentLeft', () => {
+  // Removed alert
 });
 
 socket.on('init', (moves) => {
@@ -1206,6 +1213,7 @@ showModeSelect();
 
 singleModeBtn.onclick = () => {
   showGameUI();
+  showResignButton(true);
   // TODO: Implement single player logic (no socket)
   // For now, just show the board and allow local play
   // You may want to disable or hide multiplayer-specific UI
@@ -1266,7 +1274,9 @@ socket.on('roomCreated', (room) => {
   setupBoardEventsMultiplayer();
   isHost = (room.host === socket.id);
   currentRoomName = room.name;
-  if (isHost) showStartGameButton();
+  // Only enable Play button for host
+  playBtn.disabled = !isHost;
+  playBtn.style.opacity = isHost ? 1 : 0.5;
 });
 
 socket.on('roomJoined', (room) => {
@@ -1275,31 +1285,21 @@ socket.on('roomJoined', (room) => {
   setupBoardEventsMultiplayer();
   isHost = (room.host === socket.id);
   currentRoomName = room.name;
-  // Only show start button if host (shouldn't happen for joiner, but safe)
-  if (isHost) showStartGameButton();
+  // Only enable Play button for host
+  playBtn.disabled = !isHost;
+  playBtn.style.opacity = isHost ? 1 : 0.5;
 });
 
-function showStartGameButton() {
-  let btn = document.getElementById('startGameBtn');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.id = 'startGameBtn';
-    btn.textContent = 'Start Game';
-    btn.style.fontSize = '1.5em';
-    btn.style.padding = '16px 32px';
-    btn.style.margin = '24px auto';
-    btn.style.display = 'block';
-    document.body.appendChild(btn); // Or append to a specific container
-    btn.onclick = () => {
-      socket.emit('startGame', currentRoomName);
-      btn.style.display = 'none';
-    };
+// When Play is pressed, if host, start the game for both
+playBtn.addEventListener('click', () => {
+  if (isHost && currentRoomName) {
+    socket.emit('startGame', currentRoomName);
   }
-  btn.style.display = '';
-}
+});
 
 socket.on('gameStarted', () => {
   showGameUI();
+  showResignButton(true);
   // Optionally, reset the board or do any other game start logic
 });
 
@@ -1325,3 +1325,16 @@ socket.on('roomList', (rooms) => {
     publicRoomsDiv.appendChild(btn);
   });
 });
+
+const resignContainer = document.getElementById('resignContainer');
+
+function showResignButton(show) {
+  if (resignContainer) resignContainer.style.display = show ? '' : 'none';
+}
+
+if (resignBtn) {
+  resignBtn.onclick = () => {
+    showResignButton(false);
+    showGameOverDialog(`${currentPlayer === 1 ? 'White' : 'Black'} resigns! ${currentPlayer === 1 ? 'Black' : 'White'} wins!`);
+  };
+}
