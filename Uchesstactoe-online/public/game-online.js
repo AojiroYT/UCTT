@@ -348,10 +348,14 @@ const fieldCoords = [
 // Track field ownership: 'white', 'black', or null
 let fieldOwners = Array(9).fill(null);
 // Track which pieces have left their base (not transparent)
-function isInBase(row, color) {
-  if (color === 'white') return row <= 2;
-  if (color === 'black') return row >= 6;
-  return false;
+function isInBase(piece, row, color) {
+  if (piece.classList.contains('pawn')) {
+    // Pawns become opaque when reaching rows 3,4,5 (mid-rank)
+    return !(row >= 3 && row <= 5);
+  } else {
+    // Other pieces: opaque after first move
+    return !piece.dataset.hasMoved;
+  }
 }
 function setPieceTransparency(piece, transparent) {
   if (transparent) {
@@ -362,23 +366,28 @@ function setPieceTransparency(piece, transparent) {
     piece.dataset.transparent = 'false';
   }
 }
-// Update all pieces' transparency at start
+// Update all pieces' transparency at start: all pieces transparent
 function initializeTransparency() {
   document.querySelectorAll('.piece').forEach(piece => {
-    const cell = piece.parentElement;
-    const row = Number(cell.dataset.row);
-    const color = piece.classList.contains('white') ? 'white' : 'black';
-    setPieceTransparency(piece, isInBase(row, color));
+    setPieceTransparency(piece, true);
+    piece.dataset.hasMoved = '';
   });
 }
 // Check if a piece is transparent
 function isTransparent(piece) {
   return piece.dataset.transparent === 'true';
 }
-// After a move, update transparency if a piece leaves its base
+// After a move, update transparency: pawns become opaque at mid-rank, others after first move
 function updateTransparencyAfterMove(piece, toRow) {
   const color = piece.classList.contains('white') ? 'white' : 'black';
-  if (!isInBase(toRow, color)) setPieceTransparency(piece, false);
+  if (piece.classList.contains('pawn')) {
+    if (toRow >= 3 && toRow <= 5) setPieceTransparency(piece, false);
+  } else {
+    if (!piece.dataset.hasMoved) {
+      piece.dataset.hasMoved = 'true';
+      setPieceTransparency(piece, false);
+    }
+  }
 }
 // --- Field detection and ownership ---
 function getFieldIndex(row, col) {
@@ -1016,44 +1025,6 @@ checkmateToggle.textContent = 'Enabled';
 checkmateToggle.style.background = '#28a745';
 checkmateToggle.style.color = '#222';
 
-// Add resign and offer draw buttons
-const resignBtn = document.createElement('button');
-resignBtn.textContent = 'Resign';
-resignBtn.style.display = 'none';
-settingsBar.appendChild(resignBtn);
-const drawBtn = document.createElement('button');
-drawBtn.textContent = 'Offer Draw';
-drawBtn.style.display = 'none';
-settingsBar.appendChild(drawBtn);
-
-function showGameButtons(show) {
-  resignBtn.style.display = show ? '' : 'none';
-  drawBtn.style.display = show ? '' : 'none';
-}
-
-resignBtn.addEventListener('click', () => {
-  showGameOverDialog(`${currentPlayer === 1 ? 'White' : 'Black'} resigns! ${currentPlayer === 1 ? 'Black' : 'White'} wins!`);
-});
-drawBtn.addEventListener('click', () => {
-  showGameOverDialog('Draw offered. Game ends in a draw!');
-});
-
-// Modify Play button logic to show/hide game buttons
-playBtn.addEventListener('click', () => {
-  // Apply settings and start game
-  const idx = Number(boardToggle.getAttribute('data-value'));
-  setInitialPositionsFromLayout(idx);
-  checkmateEnabled = checkmateToggle.getAttribute('data-value') === '1';
-  boardDiv.style.display = '';
-  resetBoard();
-  // Lock settings
-  boardToggle.disabled = true;
-  checkmateToggle.disabled = true;
-  playBtn.disabled = true;
-  playBtn.style.opacity = 0.5;
-  showGameButtons(true);
-});
-
 // --- Multiplayer Setup ---
 let myColor = null;
 let roomId = null;
@@ -1290,11 +1261,20 @@ socket.on('roomJoined', (room) => {
   playBtn.style.opacity = isHost ? 1 : 0.5;
 });
 
-// When Play is pressed, if host, start the game for both
+// Remove resign and draw buttons from settings bar. Only use resign button in resignContainer (bottom-right).
+// Modify Play button logic to start the game (no showGameButtons call)
 playBtn.addEventListener('click', () => {
-  if (isHost && currentRoomName) {
-    socket.emit('startGame', currentRoomName);
-  }
+  // Apply settings and start game
+  const idx = Number(boardToggle.getAttribute('data-value'));
+  setInitialPositionsFromLayout(idx);
+  checkmateEnabled = checkmateToggle.getAttribute('data-value') === '1';
+  boardDiv.style.display = '';
+  resetBoard();
+  // Lock settings
+  boardToggle.disabled = true;
+  checkmateToggle.disabled = true;
+  playBtn.disabled = true;
+  playBtn.style.opacity = 0.5;
 });
 
 socket.on('gameStarted', () => {
