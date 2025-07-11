@@ -1250,11 +1250,16 @@ socket.on('roomCreated', (room) => {
   setupBoardEventsMultiplayer();
   isHost = (room.host === socket.id);
   currentRoomName = room.name;
-  // Only enable Play button for host
-  playBtn.disabled = !isHost;
-  playBtn.style.opacity = isHost ? 1 : 0.5;
   // Set nicknames if available (host is white by default)
   setPlayerNicknames(myNickname, room.guestNickname || '-');
+  // Only enable Play button for host if a guest is present
+  if (isHost && room.guestNickname) {
+    playBtn.disabled = false;
+    playBtn.style.opacity = 1;
+  } else if (isHost) {
+    playBtn.disabled = true;
+    playBtn.style.opacity = 0.5;
+  }
 });
 
 socket.on('roomJoined', (room) => {
@@ -1263,16 +1268,30 @@ socket.on('roomJoined', (room) => {
   setupBoardEventsMultiplayer();
   isHost = (room.host === socket.id);
   currentRoomName = room.name;
-  playBtn.disabled = !isHost;
-  playBtn.style.opacity = isHost ? 1 : 0.5;
   // Set nicknames if available (host is white, guest is black)
   setPlayerNicknames(room.hostNickname || '-', myNickname);
+  // Only enable Play button for host if a guest is present
+  if (isHost && room.guestNickname) {
+    playBtn.disabled = false;
+    playBtn.style.opacity = 1;
+  } else if (isHost) {
+    playBtn.disabled = true;
+    playBtn.style.opacity = 0.5;
+  }
 });
 
-// If server sends player info, update nicknames accordingly
+// Listen for guest join/leave updates to enable/disable Play button for host
 socket.on('playerInfo', (info) => {
-  // info: {whiteNickname, blackNickname}
   setPlayerNicknames(info.whiteNickname, info.blackNickname);
+  if (isHost) {
+    if (info.blackNickname && info.blackNickname !== '-') {
+      playBtn.disabled = false;
+      playBtn.style.opacity = 1;
+    } else {
+      playBtn.disabled = true;
+      playBtn.style.opacity = 0.5;
+    }
+  }
 });
 
 // Remove resign and draw buttons from settings bar. Only use resign button in resignContainer (bottom-right).
