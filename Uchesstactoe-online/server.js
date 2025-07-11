@@ -80,7 +80,7 @@
         // Send current game state to both
         if (!games[roomId]) games[roomId] = { moves: [] };
         io.to(roomId).emit('init', games[roomId].moves);
-        // Send nicknames to both
+        // Send nicknames to both (ensure black nickname is up to date)
         io.to(roomId).emit('playerInfo', {
           whiteNickname: rooms[roomId].hostNickname,
           blackNickname: rooms[roomId].guestNickname || '-'
@@ -88,6 +88,11 @@
       } else {
         // Tell the first player to wait
         socket.emit('waitingForOpponent');
+        // Also update nicknames in case a guest left and a new one is joining
+        io.to(roomId).emit('playerInfo', {
+          whiteNickname: rooms[roomId].hostNickname,
+          blackNickname: rooms[roomId].guestNickname || '-'
+        });
       }
     });
 
