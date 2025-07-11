@@ -1280,10 +1280,34 @@ socket.on('roomJoined', (room) => {
   }
 });
 
+// System message UI helper
+function showSystemMessage(msg, duration = 4000) {
+  const el = document.getElementById('systemMessage');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.opacity = 1;
+  if (duration > 0) {
+    setTimeout(() => {
+      el.style.transition = 'opacity 0.5s';
+      el.style.opacity = 0;
+      setTimeout(() => { el.textContent = ''; el.style.transition = ''; el.style.opacity = 1; }, 600);
+    }, duration);
+  }
+}
+
+let lastBlackNickname = '-';
+
 // Listen for guest join/leave updates to enable/disable Play button for host
 socket.on('playerInfo', (info) => {
   setPlayerNicknames(info.whiteNickname, info.blackNickname);
   console.log('playerInfo received:', info, 'isHost:', isHost);
+
+  // Notify host if a guest joins
+  if (isHost && info.blackNickname && info.blackNickname !== '-' && info.blackNickname !== lastBlackNickname) {
+    showSystemMessage(`Guest "${info.blackNickname}" has joined the room!`);
+  }
+  lastBlackNickname = info.blackNickname;
+
   if (isHost) {
     // More robust check: blackNickname must be a non-empty string and not '-'
     if (typeof info.blackNickname === 'string' && info.blackNickname.trim() && info.blackNickname !== '-') {
