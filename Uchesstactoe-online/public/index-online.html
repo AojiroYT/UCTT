@@ -160,8 +160,14 @@
   
 </head>
 <body>
-    <div id="modeSelect" style="display:flex;flex-direction:column;align-items:center;gap:16px;margin:24px 0;">
+    <div style="display:flex;justify-content:center;align-items:flex-start;gap:24px;">
+      <div id="whitePlayerInfo" style="min-width:120px;text-align:right;font-size:1.2em;font-weight:bold;color:#222;align-self:center;">
+        <span style="color:blue;">White:</span> <span id="whiteNickname">-</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div id="modeSelect" style="display:flex;flex-direction:column;align-items:center;gap:16px;margin:24px 0;">
       <h2>Choose Game Mode</h2>
+      <input id="nicknameInput" placeholder="Enter your nickname" style="font-size:1.1em;padding:8px 16px;max-width:220px;" maxlength="20">
       <div style="display:flex;gap:16px;">
         <button id="singleModeBtn" style="font-size:1.2em;padding:16px 32px;">Single Player</button>
         <button id="multiModeBtn" style="font-size:1.2em;padding:16px 32px;">Multiplayer</button>
@@ -205,6 +211,10 @@
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="game-online.js"></script>
-
+      </div>
+      <div id="blackPlayerInfo" style="min-width:120px;text-align:left;font-size:1.2em;font-weight:bold;color:#222;align-self:center;">
+        <span style="color:red;">Black:</span> <span id="blackNickname">-</span>
+      </div>
+    </div>
 </body>
 </html>
