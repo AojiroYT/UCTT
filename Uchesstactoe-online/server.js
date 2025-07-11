@@ -11,7 +11,7 @@
   app.use(express.static('public'));
 
   const games = {};
-  const rooms = {}; // { roomId: { host: socketId, players: [socketId, ...] } }
+  const rooms = {}; // { roomId: { host, players, hostNickname, guestNickname } }
 
   io.on('connection', (socket) => {
     let currentRoom = null;
@@ -24,28 +24,51 @@
       socket.emit('roomList', publicRooms);
     });
 
-    socket.on('createRoom', ({ name, pass }) => {
+    socket.on('createRoom', ({ name, pass, nickname }) => {
       if (rooms[name]) {
         socket.emit('roomError', 'Room already exists.');
         return;
       }
-      rooms[name] = { host: socket.id, players: [socket.id] };
-      socket.emit('roomCreated', { name, hasPassword: !!pass, host: socket.id });
+      rooms[name] = {
+        host: socket.id,
+        players: [socket.id],
+        hostNickname: nickname || 'Player',
+        guestNickname: null
+      };
+      socket.emit('roomCreated', {
+        name,
+        hasPassword: !!pass,
+        host: socket.id,
+        hostNickname: nickname || 'Player',
+        guestNickname: null
+      });
     });
 
-    socket.on('joinRoom', ({ name, pass }) => {
+    socket.on('joinRoom', ({ name, pass, nickname }) => {
       if (!rooms[name]) {
         socket.emit('roomError', 'Room does not exist.');
         return;
       }
       rooms[name].players.push(socket.id);
-      socket.emit('roomJoined', { name, hasPassword: false, host: rooms[name].host });
+      rooms[name].guestNickname = nickname || 'Player';
+      socket.emit('roomJoined', {
+        name,
+        hasPassword: false,
+        host: rooms[name].host,
+        hostNickname: rooms[name].hostNickname,
+        guestNickname: rooms[name].guestNickname
+      });
+      // Notify both players of nicknames
+      io.to(name).emit('playerInfo', {
+        whiteNickname: rooms[name].hostNickname,
+        blackNickname: rooms[name].guestNickname || '-'
+      });
     });
 
     socket.on('join', (roomId) => {
       socket.join(roomId);
       currentRoom = roomId;
-      if (!rooms[roomId]) rooms[roomId] = { host: socket.id, players: [socket.id] };
+      if (!rooms[roomId]) rooms[roomId] = { host: socket.id, players: [socket.id], hostNickname: 'Player', guestNickname: null };
       if (!rooms[roomId].players.includes(socket.id)) rooms[roomId].players.push(socket.id);
       console.log(`Socket ${socket.id} joined room ${roomId}`);
 
@@ -57,6 +80,11 @@
         // Send current game state to both
         if (!games[roomId]) games[roomId] = { moves: [] };
         io.to(roomId).emit('init', games[roomId].moves);
+        // Send nicknames to both
+        io.to(roomId).emit('playerInfo', {
+          whiteNickname: rooms[roomId].hostNickname,
+          blackNickname: rooms[roomId].guestNickname || '-'
+        });
       } else {
         // Tell the first player to wait
         socket.emit('waitingForOpponent');
@@ -89,6 +117,17 @@
         // Optionally notify the other player
         socket.to(currentRoom).emit('opponentLeft');
         // If host leaves, optionally assign a new host or close the room
+        if (rooms[currentRoom].host === socket.id) {
+          // Host left: Optionally handle room closure or host reassignment
+          // For now, just leave the room as is
+        } else {
+          // Guest left: clear guestNickname
+          rooms[currentRoom].guestNickname = null;
+          io.to(currentRoom).emit('playerInfo', {
+            whiteNickname: rooms[currentRoom].hostNickname,
+            blackNickname: '-'
+          });
+        }
       }
     });
 
