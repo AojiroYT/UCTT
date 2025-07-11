@@ -413,22 +413,11 @@ function checkFieldControl(fieldIdx) {
       grid[Math.floor(i/3)][i%3] = piece.classList.contains('white') ? 'white' : 'black';
     }
   }
-  // Check all lines for three in a row
+  // Check all lines for three in a row (no pawn rule)
   let winner = null;
   // Rows
   for (let r=0; r<3; r++) {
     if (grid[r][0] && grid[r][0] === grid[r][1] && grid[r][1] === grid[r][2]) {
-      // Special pawn rule: if this is just outside base, check for pawns
-      const absRow = fieldCoords[fieldIdx][0]+r;
-      if ((absRow === 3 && grid[r][0] === 'white') || (absRow === 5 && grid[r][0] === 'black')) {
-        // Count pawns
-        let pawnCount = 0;
-        for (let c=0; c<3; c++) {
-          const piece = cells[r*3+c].querySelector('.piece');
-          if (piece && piece.classList.contains('pawn')) pawnCount++;
-        }
-        if (pawnCount > 1) continue; // skip this line
-      }
       winner = grid[r][0];
     }
   }
@@ -1029,6 +1018,16 @@ checkmateToggle.style.color = '#222';
 let myColor = null;
 let roomId = null;
 let isMyTurn = false;
+let myNickname = '';
+let opponentNickname = '';
+
+const whiteNicknameSpan = document.getElementById('whiteNickname');
+const blackNicknameSpan = document.getElementById('blackNickname');
+
+function setPlayerNicknames(white, black) {
+  if (whiteNicknameSpan) whiteNicknameSpan.textContent = white || '-';
+  if (blackNicknameSpan) blackNicknameSpan.textContent = black || '-';
+}
 
 function promptRoomAndJoin() {
   roomId = prompt('Enter room name (or leave blank for default):', 'room1') || 'room1';
@@ -1161,6 +1160,7 @@ if (settingsBar) settingsBar.style.display = 'flex';
 const modeSelect = document.getElementById('modeSelect');
 const singleModeBtn = document.getElementById('singleModeBtn');
 const multiModeBtn = document.getElementById('multiModeBtn');
+const nicknameInput = document.getElementById('nicknameInput');
 
 function showModeSelect() {
   if (modeSelect) modeSelect.style.display = 'flex';
@@ -1184,15 +1184,19 @@ function showLobby() {
 showModeSelect();
 
 singleModeBtn.onclick = () => {
+  myNickname = nicknameInput.value.trim() || 'Player';
   showGameUI();
   showResignButton(true);
+  setPlayerNicknames(myNickname, 'Computer');
   // TODO: Implement single player logic (no socket)
   // For now, just show the board and allow local play
   // You may want to disable or hide multiplayer-specific UI
 };
 
 multiModeBtn.onclick = () => {
+  myNickname = nicknameInput.value.trim() || 'Player';
   showLobby();
+  setPlayerNicknames('-', '-'); // Reset until room is joined
 };
 
 // --- Multiplayer Lobby Logic (restored) ---
@@ -1229,13 +1233,13 @@ confirmCreateBtn.onclick = () => {
   const name = roomNameInput.value.trim();
   const pass = roomPassInput.value;
   if (!name) return alert('Please enter a room name.');
-  socket.emit('createRoom', { name, pass });
+  socket.emit('createRoom', { name, pass, nickname: myNickname });
 };
 confirmJoinBtn.onclick = () => {
   const name = joinRoomNameInput.value.trim();
   const pass = joinRoomPassInput.value;
   if (!name) return alert('Please enter a room name.');
-  socket.emit('joinRoom', { name, pass });
+  socket.emit('joinRoom', { name, pass, nickname: myNickname });
 };
 let isHost = false;
 let currentRoomName = null;
@@ -1249,6 +1253,8 @@ socket.on('roomCreated', (room) => {
   // Only enable Play button for host
   playBtn.disabled = !isHost;
   playBtn.style.opacity = isHost ? 1 : 0.5;
+  // Set nicknames if available (host is white by default)
+  setPlayerNicknames(myNickname, room.guestNickname || '-');
 });
 
 socket.on('roomJoined', (room) => {
@@ -1259,6 +1265,14 @@ socket.on('roomJoined', (room) => {
   currentRoomName = room.name;
   playBtn.disabled = !isHost;
   playBtn.style.opacity = isHost ? 1 : 0.5;
+  // Set nicknames if available (host is white, guest is black)
+  setPlayerNicknames(room.hostNickname || '-', myNickname);
+});
+
+// If server sends player info, update nicknames accordingly
+socket.on('playerInfo', (info) => {
+  // info: {whiteNickname, blackNickname}
+  setPlayerNicknames(info.whiteNickname, info.blackNickname);
 });
 
 // Remove resign and draw buttons from settings bar. Only use resign button in resignContainer (bottom-right).
@@ -1307,6 +1321,7 @@ socket.on('roomList', (rooms) => {
 });
 
 const resignContainer = document.getElementById('resignContainer');
+const resignBtn = document.getElementById('resignBtn');
 
 function showResignButton(show) {
   if (resignContainer) resignContainer.style.display = show ? '' : 'none';
