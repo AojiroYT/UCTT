@@ -1283,8 +1283,10 @@ socket.on('roomJoined', (room) => {
 // Listen for guest join/leave updates to enable/disable Play button for host
 socket.on('playerInfo', (info) => {
   setPlayerNicknames(info.whiteNickname, info.blackNickname);
+  console.log('playerInfo received:', info, 'isHost:', isHost);
   if (isHost) {
-    if (info.blackNickname && info.blackNickname !== '-') {
+    // More robust check: blackNickname must be a non-empty string and not '-'
+    if (typeof info.blackNickname === 'string' && info.blackNickname.trim() && info.blackNickname !== '-') {
       playBtn.disabled = false;
       playBtn.style.opacity = 1;
     } else {
