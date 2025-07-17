@@ -14,6 +14,11 @@
   const rooms = {}; // { roomId: { host, players, hostNickname, guestNickname } }
 
   io.on('connection', (socket) => {
+  console.log(`[Socket.IO] 🔌 Client connected: ${socket.id}`);
+
+  socket.onAny((event, ...args) => {
+    console.log(`[Socket.IO] 📩 Received event: ${event}`, args);
+  });
     let currentRoom = null;
 
     socket.on('listRooms', () => {
