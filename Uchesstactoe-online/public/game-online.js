@@ -6,7 +6,7 @@ let validMoves = [];
 let enPassantTarget = null; // {row, col} if available
 let hasMoved = {}; // Track if king/rooks have moved for castling
 
-const socket = io("https://uctt.onrender.com/index-online.html);
+const socket = io("https://uctt.onrender.com");
 
 // 盤を作成
 function createBoard() {
