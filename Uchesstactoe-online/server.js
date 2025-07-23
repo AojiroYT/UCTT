@@ -48,7 +48,7 @@
         guestNickname: null
       });
     });
-
+    
     socket.on('joinRoom', ({ name, pass, nickname }) => {
       if (!rooms[name]) {
         socket.emit('roomError', 'Room does not exist.');
@@ -110,6 +110,7 @@
 
     socket.on('move', (move) => {
       console.log(`Received move from ${socket.id} in room ${currentRoom}`);
+      console.log('Move data:', move);  // ← これ追加して深く見る！
       if (!currentRoom) return;
       games[currentRoom].moves.push(move);
       io.to(currentRoom).emit('move', move);
