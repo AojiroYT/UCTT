@@ -38,7 +38,8 @@ socket.onAny((event, ...args) => {
       host: socket.id,
       players: [socket.id],
       hostNickname: nickname || 'Player',
-      guestNickname: null
+      guestNickname: null,
+      pass: pass || null
     };
     socket.emit('roomCreated', {
       name,
@@ -54,11 +55,16 @@ socket.onAny((event, ...args) => {
       socket.emit('roomError', 'Room does not exist.');
       return;
     }
+    if (rooms[name].pass && rooms[name].pass !== pass) {
+      socket.emit('roomError', 'Incorrect password.');
+      return;
+    }
     rooms[name].players.push(socket.id);
     rooms[name].guestNickname = nickname || 'Player';
+    socket.join(name);
     socket.emit('roomJoined', {
       name,
-      hasPassword: false,
+      hasPassword: !!rooms[name].pass,
       host: rooms[name].host,
       hostNickname: rooms[name].hostNickname,
       guestNickname: rooms[name].guestNickname
@@ -80,7 +86,8 @@ socket.onAny((event, ...args) => {
         host: socket.id,
         players: [socket.id],
         hostNickname: 'Player',
-        guestNickname: null
+        guestNickname: null,
+        pass: null
       };
     } else if (!rooms[roomId].players.includes(socket.id)) {
       rooms[roomId].players.push(socket.id);
@@ -109,20 +116,19 @@ socket.onAny((event, ...args) => {
       io.to(roomId).emit('playerInfo', {
         whiteNickname: rooms[roomId].hostNickname,
         blackNickname: rooms[roomId].guestNickname || '-'
+      });
+
+    } else {
+      // プレイヤーが1人しかいない場合
+      socket.emit('waitingForOpponent');
+
+      // ✅ 既にいるプレイヤーにニックネーム情報を更新
+      io.to(roomId).emit('playerInfo', {
+        whiteNickname: rooms[roomId].hostNickname,
+        blackNickname: rooms[roomId].guestNickname || '-'
+      });
+    }
   });
-
-  } else {
-    // プレイヤーが1人しかいない場合
-    socket.emit('waitingForOpponent');
-
-    // ✅ 既にいるプレイヤーにニックネーム情報を更新
-    io.to(roomId).emit('playerInfo', {
-      whiteNickname: rooms[roomId].hostNickname,
-      blackNickname: rooms[roomId].guestNickname || '-'
-    });
-  }
-});
-
 
   // Host starts the game
   socket.on('startGame', (roomName) => {
@@ -132,16 +138,16 @@ socket.onAny((event, ...args) => {
   });
 
   socket.on('move', (move) => {
-    console.log(`Received move from ${socket.id} in room ${currentRoom}`);
-    console.log('Move data:', move);  // ← これ追加して深く見る！
+    // move: {from: {row, col}, to: {row, col}, promotion: ...}
     if (!currentRoom) return;
+    if (!games[currentRoom]) games[currentRoom] = { moves: [] };
     games[currentRoom].moves.push(move);
     io.to(currentRoom).emit('move', move);
   });
 
   socket.on('reset', () => {
     if (!currentRoom) return;
-    games[currentRoom].moves = [];
+    if (games[currentRoom]) games[currentRoom].moves = [];
     io.to(currentRoom).emit('reset');
   });
 
@@ -163,31 +169,6 @@ socket.onAny((event, ...args) => {
         });
       }
     }
-  });
-
-  socket.on('roomCreated', (room) => {
-    console.log('roomCreated event received', room, socket.id);
-    setupBoardEventsMultiplayer();
-    isHost = (room.host === socket.id);
-    currentRoomName = room.name;
-    playBtn.disabled = !isHost;
-    playBtn.style.opacity = isHost ? 1 : 0.5;
-    playBtn.style.display = '';
-    // Optionally, hide the lobby and show the Play button
-    if (lobbyDiv) lobbyDiv.style.display = 'none';
-    if (playBtn) playBtn.style.display = '';
-  });
-
-  socket.on('roomJoined', (room) => {
-    console.log('roomJoined event received', room, socket.id);
-    setupBoardEventsMultiplayer();
-    isHost = (room.host === socket.id);
-    currentRoomName = room.name;
-    playBtn.disabled = !isHost;
-    playBtn.style.opacity = isHost ? 1 : 0.5;
-    playBtn.style.display = '';
-    if (lobbyDiv) lobbyDiv.style.display = 'none';
-    if (playBtn) playBtn.style.display = '';
   });
 });
 
