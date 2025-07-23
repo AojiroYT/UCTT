@@ -73,33 +73,56 @@ socket.onAny((event, ...args) => {
   socket.on('join', (roomId) => {
     socket.join(roomId);
     currentRoom = roomId;
-    if (!rooms[roomId]) rooms[roomId] = { host: socket.id, players: [socket.id], hostNickname: 'Player', guestNickname: null };
-    if (!rooms[roomId].players.includes(socket.id)) rooms[roomId].players.push(socket.id);
-    console.log(`Socket ${socket.id} joined room ${roomId}`);
-
-    // Wait for 2 players
-    if (rooms[roomId].players.length === 2) {
-      // Assign colors
-      io.to(rooms[roomId].players[0]).emit('assignColor', 'white');
-      io.to(rooms[roomId].players[1]).emit('assignColor', 'black');
-      // Send current game state to both
-      if (!games[roomId]) games[roomId] = { moves: [] };
-      io.to(roomId).emit('init', games[roomId].moves);
-      // Send nicknames to both (ensure black nickname is up to date)
-      io.to(roomId).emit('playerInfo', {
-        whiteNickname: rooms[roomId].hostNickname,
-        blackNickname: rooms[roomId].guestNickname || '-'
-      });
-    } else {
-      // Tell the first player to wait
-      socket.emit('waitingForOpponent');
-      // Also update nicknames in case a guest left and a new one is joining
-      io.to(roomId).emit('playerInfo', {
-        whiteNickname: rooms[roomId].hostNickname,
-        blackNickname: rooms[roomId].guestNickname || '-'
-      });
+  
+    // ルームがなければ初期化
+    if (!rooms[roomId]) {
+      rooms[roomId] = {
+        host: socket.id,
+        players: [socket.id],
+        hostNickname: 'Player',
+        guestNickname: null
+      };
+    } else if (!rooms[roomId].players.includes(socket.id)) {
+      rooms[roomId].players.push(socket.id);
     }
+  
+    console.log(`Socket ${socket.id} joined room ${roomId}`);
+  
+    // プレイヤーが2人揃ったら色を割り当ててゲーム開始
+    if (rooms[roomId].players.length === 2) {
+      const whiteSocketId = rooms[roomId].players[0];
+      const blackSocketId = rooms[roomId].players[1];
+  
+      // ✅ 色割り当てを送信
+      io.to(whiteSocketId).emit('assignColor', 'white');
+      io.to(blackSocketId).emit('assignColor', 'black');
+  
+      // ゲーム状態がなければ初期化
+      if (!games[roomId]) {
+        games[roomId] = { moves: [] };
+      }
+  
+      // ✅ ゲーム状態を送信
+      io.to(roomId).emit('init', games[roomId].moves);
+  
+      // ✅ ニックネームを送信
+      io.to(roomId).emit('playerInfo', {
+        whiteNickname: rooms[roomId].hostNickname,
+        blackNickname: rooms[roomId].guestNickname || '-'
   });
+
+  } else {
+    // プレイヤーが1人しかいない場合
+    socket.emit('waitingForOpponent');
+
+    // ✅ 既にいるプレイヤーにニックネーム情報を更新
+    io.to(roomId).emit('playerInfo', {
+      whiteNickname: rooms[roomId].hostNickname,
+      blackNickname: rooms[roomId].guestNickname || '-'
+    });
+  }
+});
+
 
   // Host starts the game
   socket.on('startGame', (roomName) => {
