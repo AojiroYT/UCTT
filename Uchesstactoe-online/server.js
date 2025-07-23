@@ -142,33 +142,6 @@
       }
     });
 
-    socket.on('roomCreated', (room) => {
-      console.log('roomCreated event received', room, socket.id);
-      socket.emit('join', room.name);
-      setupBoardEventsMultiplayer();
-      isHost = (room.host === socket.id);
-      currentRoomName = room.name;
-      playBtn.disabled = !isHost;
-      playBtn.style.opacity = isHost ? 1 : 0.5;
-      playBtn.style.display = '';
-      // Optionally, hide the lobby and show the Play button
-      if (lobbyDiv) lobbyDiv.style.display = 'none';
-      if (playBtn) playBtn.style.display = '';
-    });
-
-    socket.on('roomJoined', (room) => {
-      console.log('roomJoined event received', room, socket.id);
-      socket.emit('join', room.name);
-      setupBoardEventsMultiplayer();
-      isHost = (room.host === socket.id);
-      currentRoomName = room.name;
-      playBtn.disabled = !isHost;
-      playBtn.style.opacity = isHost ? 1 : 0.5;
-      playBtn.style.display = '';
-      if (lobbyDiv) lobbyDiv.style.display = 'none';
-      if (playBtn) playBtn.style.display = '';
-    });
-  });
 
   const PORT = process.env.PORT || 10000;
   server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
