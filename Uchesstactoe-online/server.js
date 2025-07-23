@@ -142,7 +142,10 @@ socket.onAny((event, ...args) => {
     if (!currentRoom) return;
     if (!games[currentRoom]) games[currentRoom] = { moves: [] };
     games[currentRoom].moves.push(move);
-    io.to(currentRoom).emit('move', move);
+    // 手番の色を計算
+    const lastColor = games[currentRoom].moves.length % 2 === 0 ? 'black' : 'white';
+    const moveWithTurn = { ...move, nextTurn: lastColor };
+    io.to(currentRoom).emit('move', moveWithTurn);
   });
 
   socket.on('reset', () => {
