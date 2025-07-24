@@ -1284,7 +1284,7 @@ socket.on('roomCreated', (room) => {
   socket.emit('join', room.name); 
   // Host has created a room: hide lobby, show game UI, enable Play button for host
   showGameUI(); // Hide lobby, show board/settings
-  console.log('setupBoardEventsMultiplayer called');
+  if (boardDiv) boardDiv.style.display = '';
   setupBoardEventsMultiplayer();
   isHost = (room.host === socket.id);
   currentRoomName = room.name;
@@ -1305,7 +1305,7 @@ socket.on('roomJoined', (room) => {
   socket.emit('join', room.name); 
   // Guest has joined a room: hide lobby, show game UI, Play button only for host
   showGameUI();
-  console.log('setupBoardEventsMultiplayer called');
+  if (boardDiv) boardDiv.style.display = '';
   setupBoardEventsMultiplayer();
   isHost = (room.host === socket.id);
   currentRoomName = room.name;
@@ -1391,6 +1391,8 @@ socket.on('gameStarted', () => {
   boardDiv.style.display = '';
   resetBoard();
   showGameUI();
+  if (boardDiv) boardDiv.style.display = '';
+  setupBoardEventsMultiplayer();
   showResignButton(true);
   boardToggle.disabled = true;
   checkmateToggle.disabled = true;
