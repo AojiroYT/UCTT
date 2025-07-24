@@ -1115,7 +1115,17 @@ function setupBoardEventsMultiplayer() {
     console.log('boardDiv is null!');
     return;
   }
-  boardDiv.onclick = async (e) => {
+  // 既存のローカル用イベントリスナーを全て解除
+  boardDiv.onclick = null;
+  boardDiv.oncontextmenu = null;
+  boardDiv.onmousedown = null;
+  boardDiv.onmouseup = null;
+  // addEventListenerで追加されたclickイベントも解除
+  const newBoardDiv = boardDiv.cloneNode(true);
+  boardDiv.parentNode.replaceChild(newBoardDiv, boardDiv);
+  // 新しいboardDivで以降の処理を行う
+  const boardDivFinal = document.getElementById('board');
+  boardDivFinal.onclick = async (e) => {
     console.log('boardDiv clicked');
     if (!isMyTurn) {
       console.log('not my turn', {isMyTurn});
