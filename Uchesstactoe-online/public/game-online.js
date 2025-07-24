@@ -1270,11 +1270,11 @@ socket.on('roomCreated', (room) => {
   currentRoomName = room.name;
   // Set nicknames if available (host is white by default)
   setPlayerNicknames(myNickname, room.guestNickname || '-');
-  // Only enable Play button for host if a guest is present
+  // Playボタンの有効/無効を厳密に制御
   if (isHost && room.guestNickname) {
     playBtn.disabled = false;
     playBtn.style.opacity = 1;
-  } else if (isHost) {
+  } else {
     playBtn.disabled = true;
     playBtn.style.opacity = 0.5;
   }
@@ -1290,11 +1290,11 @@ socket.on('roomJoined', (room) => {
   currentRoomName = room.name;
   // Set nicknames if available (host is white, guest is black)
   setPlayerNicknames(room.hostNickname || '-', myNickname);
-  // Only enable Play button for host if a guest is present
+  // Playボタンの有効/無効を厳密に制御
   if (isHost && room.guestNickname) {
     playBtn.disabled = false;
     playBtn.style.opacity = 1;
-  } else if (isHost) {
+  } else {
     playBtn.disabled = true;
     playBtn.style.opacity = 0.5;
   }
@@ -1329,8 +1329,8 @@ socket.on('playerInfo', (info) => {
   }
   lastBlackNickname = info.blackNickname;
 
+  // Playボタンの有効/無効を厳密に制御
   if (isHost) {
-    // More robust check: blackNickname must be a non-empty string and not '-'
     if (typeof info.blackNickname === 'string' && info.blackNickname.trim() && info.blackNickname !== '-') {
       playBtn.disabled = false;
       playBtn.style.opacity = 1;
@@ -1338,6 +1338,9 @@ socket.on('playerInfo', (info) => {
       playBtn.disabled = true;
       playBtn.style.opacity = 0.5;
     }
+  } else {
+    playBtn.disabled = true;
+    playBtn.style.opacity = 0.5;
   }
 });
 
@@ -1349,23 +1352,29 @@ socket.on('assignColor', (color) => {
 // Remove resign and draw buttons from settings bar. Only use resign button in resignContainer (bottom-right).
 // Modify Play button logic to start the game (no showGameButtons call)
 playBtn.addEventListener('click', () => {
-  // Apply settings and start game
+  if (!isHost) return; // ホスト以外は押せない
+  // サーバーにゲーム開始を通知
+  socket.emit('startGame', currentRoomName);
+  // ボタンをロック
+  playBtn.disabled = true;
+  playBtn.style.opacity = 0.5;
+  boardToggle.disabled = true;
+  checkmateToggle.disabled = true;
+});
+
+// ゲーム開始イベントを受信したら両者でUIを表示
+socket.on('gameStarted', () => {
   const idx = Number(boardToggle.getAttribute('data-value'));
   setInitialPositionsFromLayout(idx);
   checkmateEnabled = checkmateToggle.getAttribute('data-value') === '1';
   boardDiv.style.display = '';
   resetBoard();
-  // Lock settings
+  showGameUI();
+  showResignButton(true);
   boardToggle.disabled = true;
   checkmateToggle.disabled = true;
   playBtn.disabled = true;
   playBtn.style.opacity = 0.5;
-});
-
-socket.on('gameStarted', () => {
-  showGameUI();
-  showResignButton(true);
-  // Optionally, reset the board or do any other game start logic
 });
 
 socket.on('roomError', (msg) => {
