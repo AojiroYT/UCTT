@@ -1071,8 +1071,8 @@ function isMyPiece(pieceElem) {
 
 function sendMoveToServer(move) {
   // move: {from: {row, col}, to: {row, col}, promotion: ...}
-  console.log('Sending move to server:', move);
-  socket.emit('move', move);
+  console.log('Sending move to server:', move, 'roomId:', currentRoomName);
+  socket.emit('move', { ...move, roomId: currentRoomName });
 }
 
 function applyMoveFromServer(move) {
