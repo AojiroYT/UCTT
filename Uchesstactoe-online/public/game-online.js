@@ -1110,6 +1110,11 @@ function applyMoveFromServer(move) {
 function setupBoardEventsMultiplayer() {
   console.log('setupBoardEventsMultiplayer called');
   const boardDiv = document.getElementById('board');
+  console.log('boardDiv:', boardDiv);
+  if (!boardDiv) {
+    console.log('boardDiv is null!');
+    return;
+  }
   boardDiv.onclick = async (e) => {
     console.log('boardDiv clicked');
     if (!isMyTurn) {
