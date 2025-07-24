@@ -1265,6 +1265,7 @@ socket.on('roomCreated', (room) => {
   socket.emit('join', room.name); 
   // Host has created a room: hide lobby, show game UI, enable Play button for host
   showGameUI(); // Hide lobby, show board/settings
+  console.log('setupBoardEventsMultiplayer called');
   setupBoardEventsMultiplayer();
   isHost = (room.host === socket.id);
   currentRoomName = room.name;
@@ -1285,6 +1286,7 @@ socket.on('roomJoined', (room) => {
   socket.emit('join', room.name); 
   // Guest has joined a room: hide lobby, show game UI, Play button only for host
   showGameUI();
+  console.log('setupBoardEventsMultiplayer called');
   setupBoardEventsMultiplayer();
   isHost = (room.host === socket.id);
   currentRoomName = room.name;
