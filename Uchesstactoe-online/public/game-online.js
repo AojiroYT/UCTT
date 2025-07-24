@@ -1396,13 +1396,12 @@ playBtn.addEventListener('click', () => {
 
 // ゲーム開始イベントを受信したら両者でUIを表示
 socket.on('gameStarted', () => {
+  showGameUI(); // これを最初に
   const idx = Number(boardToggle.getAttribute('data-value'));
   setInitialPositionsFromLayout(idx);
   checkmateEnabled = checkmateToggle.getAttribute('data-value') === '1';
   boardDiv.style.display = '';
   resetBoard();
-  showGameUI();
-  if (boardDiv) boardDiv.style.display = '';
   setupBoardEventsMultiplayer();
   showResignButton(true);
   boardToggle.disabled = true;
