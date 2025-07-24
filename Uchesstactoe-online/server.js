@@ -138,18 +138,19 @@ socket.onAny((event, ...args) => {
   });
 
   socket.on('move', (move) => {
-    // move: {from: {row, col}, to: {row, col}, promotion: ...}
-    console.log(`[Socket.IO] move event from ${socket.id}, currentRoom:`, currentRoom, 'move:', move);
-    if (!currentRoom) {
-      console.log('[Socket.IO] move event ignored: currentRoom is null');
+    // move: {from: {row, col}, to: {row, col}, promotion: ..., roomId}
+    const roomId = move.roomId;
+    console.log(`[Socket.IO] move event from ${socket.id}, roomId:`, roomId, 'move:', move);
+    if (!roomId) {
+      console.log('[Socket.IO] move event ignored: roomId is null or undefined');
       return;
     }
-    if (!games[currentRoom]) games[currentRoom] = { moves: [] };
-    games[currentRoom].moves.push(move);
+    if (!games[roomId]) games[roomId] = { moves: [] };
+    games[roomId].moves.push(move);
     // 手番の色を計算
-    const lastColor = games[currentRoom].moves.length % 2 === 0 ? 'black' : 'white';
+    const lastColor = games[roomId].moves.length % 2 === 0 ? 'black' : 'white';
     const moveWithTurn = { ...move, nextTurn: lastColor };
-    io.to(currentRoom).emit('move', moveWithTurn);
+    io.to(roomId).emit('move', moveWithTurn);
   });
 
   socket.on('reset', () => {
