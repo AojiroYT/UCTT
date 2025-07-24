@@ -139,7 +139,11 @@ socket.onAny((event, ...args) => {
 
   socket.on('move', (move) => {
     // move: {from: {row, col}, to: {row, col}, promotion: ...}
-    if (!currentRoom) return;
+    console.log(`[Socket.IO] move event from ${socket.id}, currentRoom:`, currentRoom, 'move:', move);
+    if (!currentRoom) {
+      console.log('[Socket.IO] move event ignored: currentRoom is null');
+      return;
+    }
     if (!games[currentRoom]) games[currentRoom] = { moves: [] };
     games[currentRoom].moves.push(move);
     // 手番の色を計算
