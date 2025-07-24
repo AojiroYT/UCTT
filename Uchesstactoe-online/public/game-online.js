@@ -467,6 +467,7 @@ function updateFieldVisuals() {
   for (let i=0; i<9; i++) {
     const cells = getFieldCells(i);
     cells.forEach(cell => {
+      if (!cell) return; // nullチェックを追加
       cell.classList.remove('field-white','field-black');
       if (fieldOwners[i] === 'white') cell.classList.add('field-white');
       if (fieldOwners[i] === 'black') cell.classList.add('field-black');
