@@ -10,6 +10,7 @@ const socket = io(window.location.hostname === "localhost" ? "" : "https://uctt.
 
 // 盤を作成
 function createBoard() {
+  console.log('createBoard called');
   for (let row = 0; row < 9; row++) {
     for (let col = 0; col < 9; col++) {
       // Reverse row index for display so white is at the bottom
@@ -27,6 +28,7 @@ function createBoard() {
       board.appendChild(cell);
     }
   }
+  console.log('createBoard finished, .cell count:', document.querySelectorAll('.cell').length);
 }
 
 // 2. 初期配置マップ
@@ -1446,3 +1448,7 @@ if (resignBtn) {
     showGameOverDialog(`${currentPlayer === 1 ? 'White' : 'Black'} resigns! ${currentPlayer === 1 ? 'Black' : 'White'} wins!`);
   };
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+  createBoard();
+});
