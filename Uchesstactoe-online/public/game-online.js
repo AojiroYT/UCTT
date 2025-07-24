@@ -1058,6 +1058,17 @@ socket.on('move', (move) => {
   isMyTurn = (move.nextTurn === myColor);
 });
 
+function isMyTurnNow() {
+  return (myColor === 'white' && currentPlayer === 1) ||
+         (myColor === 'black' && currentPlayer === 2);
+}
+
+function isMyPiece(pieceElem) {
+  if (!pieceElem) return false;
+  return (myColor === 'white' && pieceElem.classList.contains('white')) ||
+         (myColor === 'black' && pieceElem.classList.contains('black'));
+}
+
 function sendMoveToServer(move) {
   // move: {from: {row, col}, to: {row, col}, promotion: ...}
   console.log('Sending move to server:', move);
@@ -1131,6 +1142,9 @@ function setupBoardEventsMultiplayer() {
       if (isPawn && ((myColor === 'white' && toRow === 8) || (myColor === 'black' && toRow === 0))) {
         promotion = await showPromotionDialog(myColor, cell, selectedPiece);
       }
+
+      if (!isMyTurnNow()) return;
+      if (!selectedPiece || !isMyPiece(selectedPiece)) return;
       // Send move to server
       sendMoveToServer({
         from: {row: fromRow, col: fromCol},
@@ -1304,6 +1318,7 @@ let lastBlackNickname = '-';
 
 // Listen for guest join/leave updates to enable/disable Play button for host
 socket.on('playerInfo', (info) => {
+  
   setPlayerNicknames(info.whiteNickname, info.blackNickname);
   console.log('playerInfo received:', info, 'isHost:', isHost);
 
@@ -1323,6 +1338,11 @@ socket.on('playerInfo', (info) => {
       playBtn.style.opacity = 0.5;
     }
   }
+});
+
+socket.on('assignColor', (color) => {
+  myColor = color;
+  console.log('🎨 You are', myColor);
 });
 
 // Remove resign and draw buttons from settings bar. Only use resign button in resignContainer (bottom-right).
