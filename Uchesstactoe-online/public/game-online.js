@@ -1108,14 +1108,22 @@ function applyMoveFromServer(move) {
 
 // --- Override board click logic for multiplayer ---
 function setupBoardEventsMultiplayer() {
+  console.log('setupBoardEventsMultiplayer called');
   const boardDiv = document.getElementById('board');
   boardDiv.onclick = async (e) => {
-    if (!isMyTurn) return;
+    console.log('boardDiv clicked');
+    if (!isMyTurn) {
+      console.log('not my turn', {isMyTurn});
+      return;
+    }
     const cell = e.target.closest('.cell');
-    if (!cell) return;
+    if (!cell) {
+      console.log('not a cell');
+      return;
+    }
     const pieceElem = cell.querySelector('.piece');
-    // Select piece
     if (pieceElem && pieceElem.classList.contains(myColor)) {
+      console.log('piece selected', {row: cell.dataset.row, col: cell.dataset.col});
       clearHighlights();
       selectedPiece = pieceElem;
       const row = Number(cell.dataset.row);
@@ -1124,9 +1132,9 @@ function setupBoardEventsMultiplayer() {
       validMoves.forEach(c => c.classList.add('highlight'));
       return;
     }
-    // Move piece
     if (selectedPiece && cell.classList.contains('highlight')) {
       if (!selectedPiece || !selectedPiece.parentElement) {
+        console.log('selectedPiece is missing or has no parent');
         clearHighlights();
         selectedPiece = null;
         validMoves = [];
@@ -1142,21 +1150,27 @@ function setupBoardEventsMultiplayer() {
       if (isPawn && ((myColor === 'white' && toRow === 8) || (myColor === 'black' && toRow === 0))) {
         promotion = await showPromotionDialog(myColor, cell, selectedPiece);
       }
-
-      if (!isMyTurnNow()) return;
-      if (!selectedPiece || !isMyPiece(selectedPiece)) return;
+      if (!isMyTurnNow()) {
+        console.log('not my turn (isMyTurnNow check)', {isMyTurnNow: isMyTurnNow()});
+        return;
+      }
+      if (!selectedPiece || !isMyPiece(selectedPiece)) {
+        console.log('selectedPiece is not mine');
+        return;
+      }
       // Send move to server
+      console.log('sending move', {fromRow, fromCol, toRow, toCol, promotion});
       sendMoveToServer({
         from: {row: fromRow, col: fromCol},
         to: {row: toRow, col: toCol},
         promotion
       });
-      
       clearHighlights();
       selectedPiece = null;
       validMoves = [];
       isMyTurn = false;
     } else {
+      console.log('clicked but not a valid move or selection');
       clearHighlights();
       selectedPiece = null;
       validMoves = [];
