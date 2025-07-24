@@ -147,9 +147,9 @@ socket.onAny((event, ...args) => {
     }
     if (!games[roomId]) games[roomId] = { moves: [] };
     games[roomId].moves.push(move);
-    // 手番の色を計算
-    const lastColor = games[roomId].moves.length % 2 === 0 ? 'black' : 'white';
-    const moveWithTurn = { ...move, nextTurn: lastColor };
+    // 次の手番の色を計算
+    const nextTurn = games[roomId].moves.length % 2 === 0 ? 'white' : 'black';
+    const moveWithTurn = { ...move, nextTurn };
     io.to(roomId).emit('move', moveWithTurn);
   });
 
