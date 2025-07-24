@@ -1151,6 +1151,7 @@ function setupBoardEventsMultiplayer() {
         to: {row: toRow, col: toCol},
         promotion
       });
+      
       clearHighlights();
       selectedPiece = null;
       validMoves = [];
